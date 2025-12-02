@@ -28,7 +28,7 @@ export default function Founder() {
       transition: {
         delay: i * 0.15,
         duration: 0.6,
-        ease: [0.16, 1, 0.3, 1],
+        ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
       },
     }),
   };
@@ -86,7 +86,7 @@ export default function Founder() {
             initial={{ opacity: 0, x: -50 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
             style={{ scale: imageScale }}
             className="lg:col-span-2"
           >
@@ -94,7 +94,7 @@ export default function Founder() {
               {/* Main Image - Founder at Work */}
               <motion.div
                 whileHover={{ scale: 1.03, rotateY: 5 }}
-                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
                 className="relative aspect-[3/4] rounded-2xl overflow-hidden shadow-luxury group perspective-1000"
               >
                 <motion.div

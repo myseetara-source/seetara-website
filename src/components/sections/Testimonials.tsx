@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, Variants } from "framer-motion";
 import Image from "next/image";
 import { Quote, Star } from "lucide-react";
 import { useRef, useEffect, useState } from "react";
@@ -55,7 +55,7 @@ export default function Testimonials() {
   const cardsY = useTransform(scrollYProgress, [0, 1], [isMobile ? 20 : 50, isMobile ? -10 : -30]);
 
   // Stagger animation variants - Simplified for mobile
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -66,7 +66,7 @@ export default function Testimonials() {
     },
   };
 
-  const cardVariants = {
+  const cardVariants: Variants = {
     hidden: { opacity: 0, y: isMobile ? 30 : 60, scale: 0.95 },
     visible: {
       opacity: 1,

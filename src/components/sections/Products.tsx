@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, Variants } from "framer-motion";
 import Image from "next/image";
 import { ShoppingBag, Heart, Eye, Star, Check } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
@@ -139,7 +139,7 @@ export default function Products() {
   };
 
   // Stagger animation variants
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -150,7 +150,7 @@ export default function Products() {
     },
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 60, scale: 0.95 },
     visible: {
       opacity: 1,

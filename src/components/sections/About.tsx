@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, Variants } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 import Image from "next/image";
 import { Heart, Leaf, Award, Users } from "lucide-react";
@@ -51,7 +51,7 @@ export default function About() {
   const scale = useTransform(scrollYProgress, [0, 0.5, 1], [0.98, 1, 0.98]);
 
   // Animation variants for values cards
-  const cardVariants = {
+  const cardVariants: Variants = {
     hidden: { opacity: 0, y: 50, rotateX: -15 },
     visible: (i: number) => ({
       opacity: 1,

@@ -1,0 +1,20 @@
+{
+  "siteName": "Seetara",
+  "siteDescription": "Premium Handcrafted Bags from Nepal",
+  "contactEmail": "hello@seetara.com",
+  "contactPhone": "+977 980-0000000",
+  "address": "Ward No. 26, Kathmandu Metropolitan City, Nepal",
+  "shippingCost": 150,
+  "freeShippingThreshold": 3000,
+  "currency": "NPR",
+  "socialLinks": {
+    "facebook": "https://facebook.com/seetara",
+    "instagram": "https://instagram.com/seetara",
+    "youtube": "https://youtube.com/seetara"
+  },
+  "adminCredentials": {
+    "email": "admin@seetara.com",
+    "password": "seetara2024"
+  }
+}
+

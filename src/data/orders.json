@@ -1,0 +1,48 @@
+[
+  {
+    "id": "1764704384219",
+    "orderNumber": "ST2512036066",
+    "items": [
+      {
+        "product": {
+          "id": "2",
+          "name": "Cognac Classic",
+          "price": 2500,
+          "description": "Timeless cognac leather that ages beautifully with every use.",
+          "image": "/images/products/tote-cognac.jpg",
+          "hoverImage": "/images/products/tote-cognac-detail.jpg",
+          "category": "Tote Bags",
+          "colors": [
+            "#A0522D",
+            "#8B5A2B",
+            "#5D3A1A"
+          ],
+          "rating": 4.8,
+          "reviews": 89,
+          "stock": 18,
+          "isActive": true,
+          "createdAt": "2024-01-20T00:00:00.000Z",
+          "updatedAt": "2024-01-20T00:00:00.000Z"
+        },
+        "quantity": 1
+      }
+    ],
+    "address": {
+      "fullName": "Dhiraj Kumar Thakur",
+      "phone": "9802200110",
+      "email": "dhiraj@gmail.com",
+      "address": "Golbazar",
+      "city": "Siraha",
+      "district": "siraha",
+      "landmark": ""
+    },
+    "paymentMethod": "cod",
+    "status": "pending",
+    "subtotal": 2500,
+    "shippingCost": 150,
+    "total": 2650,
+    "notes": "",
+    "createdAt": "2025-12-02T19:39:44.219Z",
+    "updatedAt": "2025-12-02T19:39:44.219Z"
+  }
+]

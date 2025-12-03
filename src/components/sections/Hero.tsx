@@ -4,6 +4,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import Image from "next/image";
 import { useRef, useEffect, useState } from "react";
+import { HERO_BAG } from "@/lib/images";
 
 export default function Hero() {
   const containerRef = useRef<HTMLElement>(null);
@@ -225,7 +226,7 @@ export default function Hero() {
               >
                 {/* Image */}
                 <Image
-                  src="/images/hero-bag.jpg"
+                  src={HERO_BAG}
                   alt="Seetara Premium Leather Bag"
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"

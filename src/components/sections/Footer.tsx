@@ -12,6 +12,7 @@ import {
   Heart,
   MessageCircle,
 } from "lucide-react";
+import { LOGO } from "@/lib/images";
 
 const footerLinks = {
   shop: [
@@ -100,7 +101,7 @@ export default function Footer() {
           >
             <Link href="/" className="inline-block mb-6 group">
               <Image
-                src="/images/logo/logo.png"
+                src={LOGO}
                 alt="Seetara Logo"
                 width={160}
                 height={60}

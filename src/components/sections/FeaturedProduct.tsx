@@ -5,6 +5,7 @@ import { useState, useRef } from "react";
 import Image from "next/image";
 import { ShoppingBag, Star, Sparkles } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { PRODUCTS } from "@/lib/images";
 
 interface ColorVariant {
   name: string;
@@ -16,17 +17,17 @@ const colorVariants: ColorVariant[] = [
   {
     name: "Cinnamon",
     color: "#A0522D",
-    image: "/images/products/tote-cognac.jpg",
+    image: PRODUCTS.TOTE_COGNAC,
   },
   {
     name: "Espresso",
     color: "#5D3A1A",
-    image: "/images/products/tote-black.jpg",
+    image: PRODUCTS.TOTE_BLACK,
   },
   {
     name: "Olive",
     color: "#556B2F",
-    image: "/images/products/tote-olive.jpg",
+    image: PRODUCTS.TOTE_OLIVE,
   },
 ];
 

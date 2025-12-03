@@ -4,6 +4,7 @@ import { motion, useScroll, useTransform, Variants } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 import Image from "next/image";
 import { Heart, Leaf, Award, Users } from "lucide-react";
+import { ABOUT } from "@/lib/images";
 
 const values = [
   {
@@ -135,7 +136,7 @@ export default function About() {
                 transition={{ duration: 0.4 }}
               >
                 <Image
-                  src="/images/craftsmanship.png"
+                  src={ABOUT.CRAFTSMANSHIP}
                   alt="Seetara Craftsmanship"
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -168,7 +169,7 @@ export default function About() {
                 className="absolute -bottom-4 -right-4 sm:-bottom-6 sm:-right-6 lg:-bottom-8 lg:-right-8 w-24 h-24 sm:w-36 sm:h-36 lg:w-48 lg:h-48 rounded-xl sm:rounded-2xl overflow-hidden shadow-lg sm:shadow-luxury z-20 border-2 sm:border-4 border-white"
               >
                 <Image
-                  src="/images/detail.jpg"
+                  src={ABOUT.DETAIL}
                   alt="Bag Detail"
                   fill
                   className="object-cover"

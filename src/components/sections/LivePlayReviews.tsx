@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef } from "react";
 import Image from "next/image";
 import { Play, Pause, Star, Quote, ChevronLeft, ChevronRight, CheckCircle, Users } from "lucide-react";
+import { TESTIMONIALS } from "@/lib/images";
 
 interface VideoReview {
   id: string;
@@ -23,9 +24,9 @@ const videoReviews: VideoReview[] = [
     id: "r1",
     customerName: "Priya Sharma",
     location: "Kathmandu",
-    avatar: "/images/testimonials/customer-1.jpg",
+    avatar: TESTIMONIALS.CUSTOMER_1,
     videoUrl: "/videos/review-1.mp4",
-    thumbnail: "/images/testimonials/customer-1.jpg",
+    thumbnail: TESTIMONIALS.CUSTOMER_1,
     rating: 5,
     reviewText: "The quality is absolutely amazing! I've been using this bag for 6 months and it still looks brand new.",
     productName: "Executive Tote",
@@ -35,9 +36,9 @@ const videoReviews: VideoReview[] = [
     id: "r2",
     customerName: "Anisha Thapa",
     location: "Pokhara",
-    avatar: "/images/testimonials/customer-2.jpg",
+    avatar: TESTIMONIALS.CUSTOMER_2,
     videoUrl: "/videos/review-2.mp4",
-    thumbnail: "/images/testimonials/customer-2.jpg",
+    thumbnail: TESTIMONIALS.CUSTOMER_2,
     rating: 5,
     reviewText: "Best investment I've made! The leather smell is divine and the craftsmanship is unmatched.",
     productName: "Cognac Classic",
@@ -47,9 +48,9 @@ const videoReviews: VideoReview[] = [
     id: "r3",
     customerName: "Sita Gurung",
     location: "Lalitpur",
-    avatar: "/images/testimonials/customer-3.jpg",
+    avatar: TESTIMONIALS.CUSTOMER_3,
     videoUrl: "/videos/review-3.mp4",
-    thumbnail: "/images/testimonials/customer-3.jpg",
+    thumbnail: TESTIMONIALS.CUSTOMER_3,
     rating: 5,
     reviewText: "I get so many compliments every time I carry this bag. Worth every rupee!",
     productName: "Chain Shoulder Bag",

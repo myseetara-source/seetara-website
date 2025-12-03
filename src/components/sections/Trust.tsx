@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Shield, FileCheck, BadgeCheck, CheckCircle2, Award } from "lucide-react";
+import { CERTIFICATES } from "@/lib/images";
 
 const certificates = [
   {
@@ -11,7 +12,7 @@ const certificates = [
     subtitle: "Private Firm Registration Certificate",
     description: "Officially registered under the Government of Bagmati Pradesh, Nepal",
     icon: FileCheck,
-    image: "/images/certificates/registration.jpg",
+    image: CERTIFICATES.REGISTRATION,
     highlights: ["Seetara Global", "Registered 2021", "Kathmandu, Nepal"],
   },
   {
@@ -20,7 +21,7 @@ const certificates = [
     subtitle: "Permanent Account Number Registration",
     description: "Tax compliant and transparent business operations",
     icon: Shield,
-    image: "/images/certificates/pan.jpg",
+    image: CERTIFICATES.PAN,
     highlights: ["PAN: 123106690", "Verified Business", "Tax Compliant"],
   },
 ];

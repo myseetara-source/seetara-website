@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Play, Pause, Volume2, VolumeX, ShoppingBag, Heart, ChevronLeft, ChevronRight } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
+import { PRODUCTS } from "@/lib/images";
 
 interface VideoProduct {
   id: string;
@@ -23,38 +24,38 @@ const videoProducts: VideoProduct[] = [
   {
     id: "v1",
     videoUrl: "/videos/bag-reel-1.mp4",
-    thumbnail: "/images/products/tote-black.jpg",
+    thumbnail: PRODUCTS.TOTE_BLACK,
     productName: "Executive Tote",
     price: 1800,
     originalPrice: 2200,
-    productImage: "/images/products/tote-black.jpg",
+    productImage: PRODUCTS.TOTE_BLACK,
     description: "Professional elegance meets functionality",
   },
   {
     id: "v2",
     videoUrl: "/videos/bag-reel-2.mp4",
-    thumbnail: "/images/products/tote-cognac.jpg",
+    thumbnail: PRODUCTS.TOTE_COGNAC,
     productName: "Cognac Classic",
     price: 2500,
-    productImage: "/images/products/tote-cognac.jpg",
+    productImage: PRODUCTS.TOTE_COGNAC,
     description: "Timeless cognac leather beauty",
   },
   {
     id: "v3",
     videoUrl: "/videos/bag-reel-3.mp4",
-    thumbnail: "/images/products/shoulder-black.jpg",
+    thumbnail: PRODUCTS.SHOULDER_BLACK,
     productName: "Chain Shoulder Bag",
     price: 1500,
-    productImage: "/images/products/shoulder-black.jpg",
+    productImage: PRODUCTS.SHOULDER_BLACK,
     description: "Elegant evening companion",
   },
   {
     id: "v4",
     videoUrl: "/videos/bag-reel-4.mp4",
-    thumbnail: "/images/products/hobo-brown.jpg",
+    thumbnail: PRODUCTS.HOBO_BROWN,
     productName: "Coffee Brown Hobo",
     price: 1700,
-    productImage: "/images/products/hobo-brown.jpg",
+    productImage: PRODUCTS.HOBO_BROWN,
     description: "Spacious & stylish hobo bag",
   },
 ];

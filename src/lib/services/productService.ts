@@ -139,11 +139,11 @@ export async function incrementProductViews(productId: string): Promise<void> {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (supabase as any).rpc('increment_view_count', {
-      product_id: productId,
-    });
+    product_id: productId,
+  });
 
-    if (error) {
-      console.error('Error incrementing view count:', error);
+  if (error) {
+    console.error('Error incrementing view count:', error);
     }
   } catch (err) {
     console.log('increment_view_count RPC not available:', err);

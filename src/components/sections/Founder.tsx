@@ -4,6 +4,7 @@ import { motion, useScroll, useTransform, useInView, Variants } from "framer-mot
 import Image from "next/image";
 import { Quote, CheckCircle2 } from "lucide-react";
 import { useRef } from "react";
+import { FOUNDER } from "@/lib/images";
 
 export default function Founder() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -105,7 +106,7 @@ export default function Founder() {
                   transition={{ duration: 1.5 }}
                 >
                   <Image
-                    src="/images/founder-working.jpg"
+                    src={FOUNDER.WORKING}
                     alt="Dhiraj Thakur inspecting bag quality"
                     fill
                     className="object-cover object-top transition-transform duration-700 group-hover:scale-110"
@@ -144,7 +145,7 @@ export default function Founder() {
                 className="relative aspect-[4/3] rounded-xl overflow-hidden shadow-lg mt-4 border-4 border-white cursor-pointer"
               >
                 <Image
-                  src="/images/founder-artisans.jpg"
+                  src={FOUNDER.ARTISANS}
                   alt="Dhiraj working with local artisans"
                   fill
                   className="object-cover object-[center_30%]"
@@ -328,7 +329,7 @@ export default function Founder() {
                     {/* Digital Signature */}
                     <div className="relative h-16 w-48 mb-3">
                       <Image
-                        src="/images/signature.png"
+                        src={FOUNDER.SIGNATURE}
                         alt="Dhiraj Thakur Signature"
                         fill
                         className="object-contain object-left"

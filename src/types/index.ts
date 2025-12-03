@@ -2,6 +2,8 @@
 // Website Product Types (from website_products table)
 // =====================================================
 
+import { PRODUCTS, getR2ImageUrl } from "@/lib/images";
+
 // Database type for website_products table
 export interface DbWebsiteProduct {
   id: string;
@@ -60,6 +62,15 @@ export interface Product {
 
 // Transform DB website product to frontend Product type
 export function mapWebsiteProductToProduct(dbProduct: DbWebsiteProduct): Product {
+  // Convert image URLs to R2 URLs if they're local paths
+  const getImageUrl = (url: string | null | undefined): string => {
+    if (!url) return PRODUCTS.PLACEHOLDER;
+    // If it's already a full URL, return as-is
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    // Convert local path to R2 URL
+    return getR2ImageUrl(url);
+  };
+
   return {
     id: dbProduct.id,
     name: dbProduct.name,
@@ -67,9 +78,9 @@ export function mapWebsiteProductToProduct(dbProduct: DbWebsiteProduct): Product
     originalPrice: dbProduct.compare_price || undefined,
     description: dbProduct.description || '',
     shortDescription: dbProduct.short_description || undefined,
-    image: dbProduct.image_url || '/images/products/placeholder.jpg',
-    hoverImage: dbProduct.hover_image_url || undefined,
-    galleryImages: dbProduct.gallery_urls || [],
+    image: getImageUrl(dbProduct.image_url),
+    hoverImage: dbProduct.hover_image_url ? getImageUrl(dbProduct.hover_image_url) : undefined,
+    galleryImages: (dbProduct.gallery_urls || []).map(url => getImageUrl(url)),
     category: dbProduct.category || 'Uncategorized',
     colors: dbProduct.available_colors || [],
     sizes: dbProduct.available_sizes || [],
@@ -183,14 +194,25 @@ export interface DbProduct {
 
 // Legacy mapper (for backward compatibility)
 export function mapDbProductToProduct(dbProduct: DbProduct): Product {
+  // Convert image URLs to R2 URLs if they're local paths
+  const getImageUrl = (url: string | null | undefined): string => {
+    if (!url) return PRODUCTS.PLACEHOLDER;
+    // If it's already a full URL, return as-is
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    // Convert local path to R2 URL
+    return getR2ImageUrl(url);
+  };
+
   return {
     id: dbProduct.id,
     name: dbProduct.website_title || dbProduct.name,
     price: dbProduct.sale_price || dbProduct.base_price,
     originalPrice: dbProduct.sale_price ? dbProduct.base_price : undefined,
     description: dbProduct.website_description || dbProduct.description || '',
-    image: dbProduct.image_url || '/images/products/placeholder.jpg',
-    hoverImage: dbProduct.website_hover_image || (dbProduct.gallery_urls?.[0] ?? undefined),
+    image: getImageUrl(dbProduct.image_url),
+    hoverImage: dbProduct.website_hover_image 
+      ? getImageUrl(dbProduct.website_hover_image) 
+      : (dbProduct.gallery_urls?.[0] ? getImageUrl(dbProduct.gallery_urls[0]) : undefined),
     category: dbProduct.category || 'Uncategorized',
     colors: dbProduct.website_colors || [],
     sizes: [],

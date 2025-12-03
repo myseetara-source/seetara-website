@@ -7,6 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
+import { LOGO } from "@/lib/images";
 
 const navLinks = [
   { name: "Collection", href: "#collection" },
@@ -65,7 +66,7 @@ export default function Navbar() {
                 className="flex items-center gap-2"
               >
                 <Image
-                  src="/images/logo/logo.png"
+                  src={LOGO}
                   alt="Seetara Logo"
                   width={140}
                   height={50}

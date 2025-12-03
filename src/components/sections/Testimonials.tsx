@@ -4,6 +4,7 @@ import { motion, useScroll, useTransform, Variants } from "framer-motion";
 import Image from "next/image";
 import { Quote, Star } from "lucide-react";
 import { useRef, useEffect, useState } from "react";
+import { TESTIMONIALS } from "@/lib/images";
 
 const testimonials = [
   {
@@ -11,7 +12,7 @@ const testimonials = [
     name: "Priya Sharma",
     role: "Marketing Executive",
     location: "Kathmandu",
-    image: "/images/testimonials/customer-1.jpg",
+    image: TESTIMONIALS.CUSTOMER_1,
     rating: 5,
     text: "The Executive Tote has become my daily companion. The quality is exceptional — after 8 months of daily use, it still looks brand new. Truly worth every rupee!",
   },
@@ -20,7 +21,7 @@ const testimonials = [
     name: "Anisha Gurung",
     role: "Entrepreneur",
     location: "Pokhara",
-    image: "/images/testimonials/customer-2.jpg",
+    image: TESTIMONIALS.CUSTOMER_2,
     rating: 5,
     text: "I was skeptical about ordering online, but Seetara exceeded all expectations. The bag is even more beautiful in person, and the customer service was outstanding.",
   },
@@ -29,7 +30,7 @@ const testimonials = [
     name: "Sunita Thapa",
     role: "Doctor",
     location: "Lalitpur",
-    image: "/images/testimonials/customer-3.jpg",
+    image: TESTIMONIALS.CUSTOMER_3,
     rating: 5,
     text: "Finally, a Nepali brand that understands what working women need. Spacious, stylish, and sturdy. I've already bought two more as gifts!",
   },

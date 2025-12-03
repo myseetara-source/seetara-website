@@ -60,6 +60,7 @@ export default function FeaturedProduct() {
       id: "featured-1",
       name: `Cognac Classic - ${colorVariants[activeIndex].name}`,
       price: 2500,
+      description: "Our signature tote bag, handcrafted with premium Nepali leather.",
       image: colorVariants[activeIndex].image,
       category: "Tote Bags",
       colors: colorVariants.map(v => v.color),

@@ -64,10 +64,11 @@ export default function FeaturedProduct() {
       image: colorVariants[activeIndex].image,
       category: "Tote Bags",
       colors: colorVariants.map(v => v.color),
+      sizes: [],
       rating: 4.9,
       reviews: 156,
-      stock: 20,
       isActive: true,
+      isFeatured: true,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });

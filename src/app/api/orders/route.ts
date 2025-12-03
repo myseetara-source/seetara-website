@@ -131,9 +131,10 @@ export async function POST(request: NextRequest) {
     };
 
     // Insert order into Supabase (using type assertion for untyped table)
-    const { data: newOrder, error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: newOrder, error } = await (supabase as any)
       .from("orders")
-      .insert(orderData as never)
+      .insert(orderData)
       .select()
       .single();
 
@@ -163,7 +164,7 @@ export async function POST(request: NextRequest) {
       {
         success: true,
         data: {
-          id: newOrder.id,
+          id: newOrder?.id || orderId,
           orderNumber: orderId,
         },
         message: "Order placed successfully!",

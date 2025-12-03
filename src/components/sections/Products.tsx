@@ -1,118 +1,45 @@
 "use client";
 
-import { motion, useScroll, useTransform, Variants } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import Image from "next/image";
 import { ShoppingBag, Heart, Eye, Star, Check } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { Product } from "@/types";
 
-const products: Product[] = [
-  {
-    id: "1",
-    name: "Executive Tote",
-    price: 1800,
-    description: "Professional elegance meets everyday functionality. 16\" laptop compartment.",
-    image: "/images/products/tote-black.jpg",
-    hoverImage: "/images/products/tote-black-detail.jpg",
-    category: "Tote Bags",
-    colors: ["#1a1a1a", "#5D3A1A", "#3d3d3d"],
-    rating: 4.9,
-    reviews: 127,
-    badge: "Bestseller",
-    stock: 25,
-    isActive: true,
-    createdAt: "2024-01-15T00:00:00.000Z",
-    updatedAt: "2024-01-15T00:00:00.000Z",
-  },
-  {
-    id: "2",
-    name: "Cognac Classic",
-    price: 2500,
-    description: "Timeless cognac leather that ages beautifully with every use.",
-    image: "/images/products/tote-cognac.jpg",
-    hoverImage: "/images/products/tote-cognac-detail.jpg",
-    category: "Tote Bags",
-    colors: ["#A0522D", "#8B5A2B", "#5D3A1A"],
-    rating: 4.8,
-    reviews: 89,
-    stock: 18,
-    isActive: true,
-    createdAt: "2024-01-20T00:00:00.000Z",
-    updatedAt: "2024-01-20T00:00:00.000Z",
-  },
-  {
-    id: "3",
-    name: "Chain Shoulder Bag",
-    price: 1500,
-    description: "Elegant evening companion with signature gold chain strap.",
-    image: "/images/products/shoulder-black.jpg",
-    category: "Shoulder Bags",
-    colors: ["#1a1a1a", "#722F37", "#5D3A1A"],
-    rating: 4.7,
-    reviews: 64,
-    badge: "New Arrival",
-    stock: 30,
-    isActive: true,
-    createdAt: "2024-02-01T00:00:00.000Z",
-    updatedAt: "2024-02-01T00:00:00.000Z",
-  },
-  {
-    id: "4",
-    name: "Coffee Brown Hobo",
-    price: 1700,
-    description: "Spacious hobo bag for the woman who carries her world with style.",
-    image: "/images/products/hobo-brown.jpg",
-    category: "Hobo Bags",
-    colors: ["#5D3A1A", "#3d3d3d", "#A0522D"],
-    rating: 4.9,
-    reviews: 93,
-    stock: 22,
-    isActive: true,
-    createdAt: "2024-02-10T00:00:00.000Z",
-    updatedAt: "2024-02-10T00:00:00.000Z",
-  },
-  {
-    id: "5",
-    name: "Olive Professional",
-    price: 1900,
-    description: "Modern olive green for the bold professional making a statement.",
-    image: "/images/products/tote-olive.jpg",
-    category: "Tote Bags",
-    colors: ["#556B2F", "#5D3A1A", "#1a1a1a"],
-    rating: 4.6,
-    reviews: 51,
-    stock: 15,
-    isActive: true,
-    createdAt: "2024-02-15T00:00:00.000Z",
-    updatedAt: "2024-02-15T00:00:00.000Z",
-  },
-  {
-    id: "6",
-    name: "Maroon Elegance",
-    price: 1900,
-    description: "Rich maroon shoulder bag for special occasions and everyday luxury.",
-    image: "/images/products/shoulder-maroon.jpg",
-    category: "Shoulder Bags",
-    colors: ["#722F37", "#5D3A1A", "#1a1a1a"],
-    rating: 4.8,
-    reviews: 72,
-    badge: "Limited Edition",
-    stock: 10,
-    isActive: true,
-    createdAt: "2024-02-20T00:00:00.000Z",
-    updatedAt: "2024-02-20T00:00:00.000Z",
-  },
-];
+interface ProductsProps {
+  products?: Product[];
+}
 
-export default function Products() {
+export default function Products({ products: initialProducts }: ProductsProps) {
   const [hoveredProduct, setHoveredProduct] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [isMobile, setIsMobile] = useState(false);
-  const sectionRef = useRef<HTMLElement>(null);
+  const [products, setProducts] = useState<Product[]>(initialProducts || []);
+  const [isLoading, setIsLoading] = useState(!initialProducts);
   const { addToCart, isInCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+
+  // Fetch products from API if not provided as props
+  useEffect(() => {
+    if (!initialProducts) {
+      const fetchProducts = async () => {
+        try {
+          const response = await fetch('/api/products');
+          if (response.ok) {
+            const data = await response.json();
+            setProducts(data.products || []);
+          }
+        } catch (error) {
+          console.error('Failed to fetch products:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchProducts();
+    }
+  }, [initialProducts]);
 
   // Detect mobile
   useEffect(() => {
@@ -121,14 +48,6 @@ export default function Products() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
-  
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start end", "end start"],
-  });
-
-  const backgroundY = useTransform(scrollYProgress, [0, 1], [0, isMobile ? -30 : -100]);
-  const decorY = useTransform(scrollYProgress, [0, 1], [20, isMobile ? -20 : -50]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("en-NP", {
@@ -137,6 +56,9 @@ export default function Products() {
       minimumFractionDigits: 0,
     }).format(price);
   };
+
+  // Get unique categories from products
+  const categories = ["All", ...new Set(products.map((p) => p.category))];
 
   // Stagger animation variants
   const containerVariants: Variants = {
@@ -164,17 +86,62 @@ export default function Products() {
     },
   };
 
+  // Filter products by category and active status
+  const filteredProducts = products.filter(
+    (product) =>
+      product.isActive &&
+      (selectedCategory === "All" || product.category === selectedCategory)
+  );
+
+  if (isLoading) {
+    return (
+      <section className="relative py-16 sm:py-20 md:py-24 lg:py-32 overflow-hidden bg-[#FFFBF7]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <div className="h-4 w-32 bg-gray-200 rounded mx-auto mb-4 animate-pulse" />
+            <div className="h-10 w-64 bg-gray-200 rounded mx-auto mb-4 animate-pulse" />
+            <div className="h-4 w-96 bg-gray-200 rounded mx-auto animate-pulse" />
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-sm">
+                <div className="aspect-[3/4] bg-gray-200 animate-pulse" />
+                <div className="p-4">
+                  <div className="h-4 w-20 bg-gray-200 rounded mb-2 animate-pulse" />
+                  <div className="h-6 w-32 bg-gray-200 rounded mb-2 animate-pulse" />
+                  <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (products.length === 0) {
+    return (
+      <section className="relative py-16 sm:py-20 md:py-24 lg:py-32 overflow-hidden bg-[#FFFBF7]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <span className="inline-block text-[#C9A227] text-xs sm:text-sm font-medium tracking-[0.15em] sm:tracking-[0.2em] uppercase mb-2 sm:mb-4">
+            Curated Collection
+          </span>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif text-[#2C1810] mb-6">
+            Coming Soon
+          </h2>
+          <p className="text-[#7A6252] max-w-xl mx-auto">
+            We&apos;re preparing our exclusive collection for you. Check back soon!
+          </p>
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section ref={sectionRef} id="collection" className="relative py-16 sm:py-20 md:py-24 lg:py-32 overflow-hidden bg-[#FFFBF7]">
-      {/* Animated Background Decorations - Smaller on mobile */}
-      <motion.div 
-        style={isMobile ? {} : { y: decorY }}
-        className="absolute top-0 right-0 w-[200px] sm:w-[300px] md:w-[500px] h-[200px] sm:h-[300px] md:h-[500px] bg-gradient-to-bl from-[#C9A227]/10 to-transparent rounded-full blur-[60px] sm:blur-[80px] md:blur-[120px]" 
-      />
-      <motion.div 
-        style={isMobile ? {} : { y: backgroundY }}
-        className="absolute bottom-0 left-0 w-[150px] sm:w-[250px] md:w-[400px] h-[150px] sm:h-[250px] md:h-[400px] bg-gradient-to-tr from-[#8B5A2B]/10 to-transparent rounded-full blur-[50px] sm:blur-[70px] md:blur-[100px]" 
-      />
+    <section id="collection" className="relative py-16 sm:py-20 md:py-24 lg:py-32 overflow-hidden bg-[#FFFBF7]">
+      {/* Background Decorations */}
+      <div className="absolute top-0 right-0 w-[200px] sm:w-[300px] md:w-[500px] h-[200px] sm:h-[300px] md:h-[500px] bg-gradient-to-bl from-[#C9A227]/10 to-transparent rounded-full blur-[60px] sm:blur-[80px] md:blur-[120px]" />
+      <div className="absolute bottom-0 left-0 w-[150px] sm:w-[250px] md:w-[400px] h-[150px] sm:h-[250px] md:h-[400px] bg-gradient-to-tr from-[#8B5A2B]/10 to-transparent rounded-full blur-[50px] sm:blur-[70px] md:blur-[100px]" />
       
       {/* Floating Decorative Elements - Hidden on mobile */}
       <motion.div
@@ -214,9 +181,9 @@ export default function Products() {
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="flex justify-start sm:justify-center gap-2 sm:gap-3 mb-6 sm:mb-8 md:mb-12 overflow-x-auto pb-2 px-1 sm:px-0 scrollbar-hide -mx-4 sm:mx-0 px-4 sm:px-0"
+          className="flex justify-start sm:justify-center gap-2 sm:gap-3 mb-6 sm:mb-8 md:mb-12 overflow-x-auto pb-2 scrollbar-hide -mx-4 sm:mx-0 px-4 sm:px-0"
         >
-          {["All", "Tote Bags", "Shoulder Bags", "Hobo Bags"].map((filter, index) => (
+          {categories.map((filter, index) => (
             <motion.button
               key={filter}
               onClick={() => setSelectedCategory(filter)}
@@ -244,9 +211,7 @@ export default function Products() {
           whileInView="visible"
           viewport={{ once: true, margin: "-50px" }}
         >
-          {products
-            .filter((product) => selectedCategory === "All" || product.category === selectedCategory)
-            .map((product, index) => (
+          {filteredProducts.map((product, index) => (
             <motion.div
               key={product.id}
               variants={itemVariants}
@@ -484,4 +449,3 @@ export default function Products() {
     </section>
   );
 }
-

@@ -148,10 +148,11 @@ export async function POST(request: NextRequest) {
     // Increment order count for the website products (optional - may not exist)
     for (const item of items) {
       try {
-        await (supabase.rpc as (fn: string, args: Record<string, unknown>) => Promise<unknown>)(
-          'increment_order_count', 
-          { product_id: item.product.id, count: item.quantity }
-        );
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase as any).rpc('increment_order_count', {
+          product_id: item.product.id,
+          count: item.quantity,
+        });
       } catch (err) {
         // RPC may not exist - this is optional functionality
         console.log('increment_order_count RPC not available:', err);

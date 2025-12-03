@@ -98,39 +98,42 @@ export async function POST(request: NextRequest) {
       customer_email: address.email,
     };
 
-    // Insert order into Supabase
+    // Prepare order data for insertion
+    const orderData = {
+      order_id: orderId,
+      customer_name: address.fullName,
+      cell_number: address.phone,
+      full_address: fullAddress,
+      valley: valley,
+      product: productDescription,
+      product_details: productDetails,
+      cash_on_delivery: paymentMethod === "cod" ? total : 0,
+      pre_payment: paymentMethod !== "cod" ? total : 0,
+      discount: 0,
+      status: "intake",
+      source: "website",
+      // Inventory tracking columns
+      inventory_product_id: primaryInventoryProductId,
+      website_product_id: primaryWebsiteProductId,
+      followup: notes || null,
+      comment_history: [
+        {
+          id: crypto.randomUUID(),
+          type: "system",
+          message: `Order placed from website. Payment method: ${paymentMethod.toUpperCase()}`,
+          author: "Website",
+          userId: "website",
+          source: "website",
+          visibility: "internal",
+          createdAt: new Date().toISOString(),
+        },
+      ],
+    };
+
+    // Insert order into Supabase (using type assertion for untyped table)
     const { data: newOrder, error } = await supabase
       .from("orders")
-      .insert({
-        order_id: orderId,
-        customer_name: address.fullName,
-        cell_number: address.phone,
-        full_address: fullAddress,
-        valley: valley,
-        product: productDescription,
-        product_details: productDetails,
-        cash_on_delivery: paymentMethod === "cod" ? total : 0,
-        pre_payment: paymentMethod !== "cod" ? total : 0,
-        discount: 0,
-        status: "intake",
-        source: "website",
-        // Inventory tracking columns
-        inventory_product_id: primaryInventoryProductId,
-        website_product_id: primaryWebsiteProductId,
-        followup: notes || null,
-        comment_history: [
-          {
-            id: crypto.randomUUID(),
-            type: "system",
-            message: `Order placed from website. Payment method: ${paymentMethod.toUpperCase()}`,
-            author: "Website",
-            userId: "website",
-            source: "website",
-            visibility: "internal",
-            createdAt: new Date().toISOString(),
-          },
-        ],
-      })
+      .insert(orderData as never)
       .select()
       .single();
 

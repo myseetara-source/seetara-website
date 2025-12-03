@@ -145,14 +145,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Increment order count for the website products
+    // Increment order count for the website products (optional - may not exist)
     for (const item of items) {
-      await supabase.rpc('increment_order_count', {
-        product_id: item.product.id,
-        count: item.quantity,
-      }).catch(err => {
-        console.error('Error incrementing order count:', err);
-      });
+      try {
+        await (supabase.rpc as (fn: string, args: Record<string, unknown>) => Promise<unknown>)(
+          'increment_order_count', 
+          { product_id: item.product.id, count: item.quantity }
+        );
+      } catch (err) {
+        // RPC may not exist - this is optional functionality
+        console.log('increment_order_count RPC not available:', err);
+      }
     }
 
     return NextResponse.json(

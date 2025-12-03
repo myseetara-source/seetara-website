@@ -3,11 +3,10 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus, Minus, ShoppingBag, Trash2 } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 
 export default function CartDrawer() {
-  const { items, isCartOpen, setIsCartOpen, removeFromCart, updateQuantity, getCartTotal, getCartCount } = useCart();
+  const { items, isCartOpen, setIsCartOpen, removeFromCart, updateQuantity, getCartTotal, getCartCount, openCheckout } = useCart();
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("en-NP", {
@@ -180,13 +179,12 @@ export default function CartDrawer() {
                 </div>
 
                 {/* Checkout Button */}
-                <Link
-                  href="/checkout"
-                  onClick={() => setIsCartOpen(false)}
+                <button
+                  onClick={openCheckout}
                   className="block w-full py-4 bg-gradient-to-r from-[#2C1810] to-[#5D3A1A] text-white text-center rounded-xl font-medium hover:from-[#5D3A1A] hover:to-[#8B5A2B] transition-all"
                 >
                   Proceed to Checkout
-                </Link>
+                </button>
 
                 {/* Continue Shopping */}
                 <button

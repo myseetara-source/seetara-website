@@ -14,6 +14,9 @@ interface CartContextType {
   isInCart: (productId: string) => boolean;
   isCartOpen: boolean;
   setIsCartOpen: (open: boolean) => void;
+  isCheckoutOpen: boolean;
+  setIsCheckoutOpen: (open: boolean) => void;
+  openCheckout: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -21,7 +24,13 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+
+  const openCheckout = () => {
+    setIsCartOpen(false);
+    setIsCheckoutOpen(true);
+  };
 
   // Load cart from localStorage on mount
   useEffect(() => {
@@ -106,6 +115,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         isInCart,
         isCartOpen,
         setIsCartOpen,
+        isCheckoutOpen,
+        setIsCheckoutOpen,
+        openCheckout,
       }}
     >
       {children}

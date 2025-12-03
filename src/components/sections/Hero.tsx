@@ -102,7 +102,7 @@ export default function Hero() {
             >
               <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#C9A227]" />
               <span className="text-xs sm:text-sm font-medium text-[#5D3A1A] tracking-wide">
-                Handcrafted in Nepal
+                Be The Star You Are ✨
               </span>
             </motion.div>
 
@@ -248,10 +248,10 @@ export default function Hero() {
               >
                 <div className="flex items-center gap-2 sm:gap-3">
                   <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-full bg-gradient-to-br from-[#F5EDE6] to-[#E8DDD4] flex items-center justify-center">
-                    <span className="text-base sm:text-lg lg:text-xl">🏆</span>
+                    <span className="text-base sm:text-lg lg:text-xl">⭐</span>
                   </div>
                   <div>
-                    <p className="text-xs sm:text-sm font-medium text-[#2C1810]">Certified Quality</p>
+                    <p className="text-xs sm:text-sm font-medium text-[#2C1810]">Be The Star You Are</p>
                     <p className="text-[10px] sm:text-xs text-[#7A6252]">Handcrafted in Nepal</p>
                   </div>
                 </div>

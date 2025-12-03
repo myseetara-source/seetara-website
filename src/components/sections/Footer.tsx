@@ -108,8 +108,9 @@ export default function Footer() {
               />
             </Link>
             <p className="text-[#B8A99A] text-sm mb-6 max-w-xs leading-relaxed">
-              Premium handcrafted bags born from generations of Nepali craftsmanship. 
-              Where heritage meets modern elegance.
+              <span className="text-[#C9A227] font-medium">Be The Star You Are ✨</span>
+              <br />
+              Premium handcrafted bags born from generations of Nepali craftsmanship.
             </p>
             
             {/* Social Links with Brand Colors */}

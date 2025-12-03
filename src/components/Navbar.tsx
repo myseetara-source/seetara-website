@@ -241,7 +241,9 @@ export default function Navbar() {
                 transition={{ delay: 0.5 }}
                 className="mt-12 text-sm text-[#7A6252] text-center"
               >
-                Premium Handcrafted Bags • Made in Nepal
+                <span className="text-[#C9A227] font-medium">Be The Star You Are ✨</span>
+                <br />
+                Handcrafted in Nepal
               </motion.p>
             </div>
           </motion.div>

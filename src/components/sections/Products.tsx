@@ -7,16 +7,17 @@ import { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { Product } from "@/types";
+import { PRODUCTS } from "@/lib/images";
 
-// Fallback static products data
+// Fallback static products data with Cloudflare R2 URLs
 const staticProducts: Product[] = [
   {
     id: "1",
     name: "Executive Tote",
     price: 1800,
     description: "Professional elegance meets everyday functionality. 16\" laptop compartment.",
-    image: "/images/products/tote-black.jpg",
-    hoverImage: "/images/products/tote-black-detail.jpg",
+    image: PRODUCTS.TOTE_BLACK,
+    hoverImage: PRODUCTS.TOTE_BLACK_DETAIL,
     category: "Tote Bags",
     colors: ["#1a1a1a", "#5D3A1A", "#3d3d3d"],
     sizes: [],
@@ -33,8 +34,8 @@ const staticProducts: Product[] = [
     name: "Cognac Classic",
     price: 2500,
     description: "Timeless cognac leather that ages beautifully with every use.",
-    image: "/images/products/tote-cognac.jpg",
-    hoverImage: "/images/products/tote-cognac-detail.jpg",
+    image: PRODUCTS.TOTE_COGNAC,
+    hoverImage: PRODUCTS.TOTE_COGNAC_DETAIL,
     category: "Tote Bags",
     colors: ["#A0522D", "#8B5A2B", "#5D3A1A"],
     sizes: [],
@@ -50,7 +51,7 @@ const staticProducts: Product[] = [
     name: "Chain Shoulder Bag",
     price: 1500,
     description: "Elegant evening companion with signature gold chain strap.",
-    image: "/images/products/shoulder-black.jpg",
+    image: PRODUCTS.SHOULDER_BLACK,
     category: "Shoulder Bags",
     colors: ["#1a1a1a", "#722F37", "#5D3A1A"],
     sizes: [],
@@ -67,7 +68,7 @@ const staticProducts: Product[] = [
     name: "Coffee Brown Hobo",
     price: 1700,
     description: "Spacious hobo bag for the woman who carries her world with style.",
-    image: "/images/products/hobo-brown.jpg",
+    image: PRODUCTS.HOBO_BROWN,
     category: "Hobo Bags",
     colors: ["#5D3A1A", "#3d3d3d", "#A0522D"],
     sizes: [],
@@ -83,7 +84,7 @@ const staticProducts: Product[] = [
     name: "Olive Professional",
     price: 1900,
     description: "Modern olive green for the bold professional making a statement.",
-    image: "/images/products/tote-olive.jpg",
+    image: PRODUCTS.TOTE_OLIVE,
     category: "Tote Bags",
     colors: ["#556B2F", "#5D3A1A", "#1a1a1a"],
     sizes: [],
@@ -99,7 +100,7 @@ const staticProducts: Product[] = [
     name: "Maroon Elegance",
     price: 1900,
     description: "Rich maroon shoulder bag for special occasions and everyday luxury.",
-    image: "/images/products/shoulder-maroon.jpg",
+    image: PRODUCTS.SHOULDER_MAROON,
     category: "Shoulder Bags",
     colors: ["#722F37", "#5D3A1A", "#1a1a1a"],
     sizes: [],

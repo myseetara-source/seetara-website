@@ -8,6 +8,111 @@ import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { Product } from "@/types";
 
+// Fallback static products data
+const staticProducts: Product[] = [
+  {
+    id: "1",
+    name: "Executive Tote",
+    price: 1800,
+    description: "Professional elegance meets everyday functionality. 16\" laptop compartment.",
+    image: "/images/products/tote-black.jpg",
+    hoverImage: "/images/products/tote-black-detail.jpg",
+    category: "Tote Bags",
+    colors: ["#1a1a1a", "#5D3A1A", "#3d3d3d"],
+    sizes: [],
+    rating: 4.9,
+    reviews: 127,
+    badge: "Bestseller",
+    isActive: true,
+    isFeatured: true,
+    createdAt: "2024-01-15T00:00:00.000Z",
+    updatedAt: "2024-01-15T00:00:00.000Z",
+  },
+  {
+    id: "2",
+    name: "Cognac Classic",
+    price: 2500,
+    description: "Timeless cognac leather that ages beautifully with every use.",
+    image: "/images/products/tote-cognac.jpg",
+    hoverImage: "/images/products/tote-cognac-detail.jpg",
+    category: "Tote Bags",
+    colors: ["#A0522D", "#8B5A2B", "#5D3A1A"],
+    sizes: [],
+    rating: 4.8,
+    reviews: 89,
+    isActive: true,
+    isFeatured: true,
+    createdAt: "2024-01-20T00:00:00.000Z",
+    updatedAt: "2024-01-20T00:00:00.000Z",
+  },
+  {
+    id: "3",
+    name: "Chain Shoulder Bag",
+    price: 1500,
+    description: "Elegant evening companion with signature gold chain strap.",
+    image: "/images/products/shoulder-black.jpg",
+    category: "Shoulder Bags",
+    colors: ["#1a1a1a", "#722F37", "#5D3A1A"],
+    sizes: [],
+    rating: 4.7,
+    reviews: 64,
+    badge: "New Arrival",
+    isActive: true,
+    isFeatured: false,
+    createdAt: "2024-02-01T00:00:00.000Z",
+    updatedAt: "2024-02-01T00:00:00.000Z",
+  },
+  {
+    id: "4",
+    name: "Coffee Brown Hobo",
+    price: 1700,
+    description: "Spacious hobo bag for the woman who carries her world with style.",
+    image: "/images/products/hobo-brown.jpg",
+    category: "Hobo Bags",
+    colors: ["#5D3A1A", "#3d3d3d", "#A0522D"],
+    sizes: [],
+    rating: 4.9,
+    reviews: 93,
+    isActive: true,
+    isFeatured: false,
+    createdAt: "2024-02-10T00:00:00.000Z",
+    updatedAt: "2024-02-10T00:00:00.000Z",
+  },
+  {
+    id: "5",
+    name: "Olive Professional",
+    price: 1900,
+    description: "Modern olive green for the bold professional making a statement.",
+    image: "/images/products/tote-olive.jpg",
+    category: "Tote Bags",
+    colors: ["#556B2F", "#5D3A1A", "#1a1a1a"],
+    sizes: [],
+    rating: 4.6,
+    reviews: 51,
+    isActive: true,
+    isFeatured: false,
+    createdAt: "2024-02-15T00:00:00.000Z",
+    updatedAt: "2024-02-15T00:00:00.000Z",
+  },
+  {
+    id: "6",
+    name: "Maroon Elegance",
+    price: 1900,
+    description: "Rich maroon shoulder bag for special occasions and everyday luxury.",
+    image: "/images/products/shoulder-maroon.jpg",
+    category: "Shoulder Bags",
+    colors: ["#722F37", "#5D3A1A", "#1a1a1a"],
+    sizes: [],
+    rating: 4.8,
+    reviews: 72,
+    badge: "Limited Edition",
+    isActive: true,
+    isFeatured: false,
+    createdAt: "2024-02-20T00:00:00.000Z",
+    updatedAt: "2024-02-20T00:00:00.000Z",
+  },
+];
+
 interface ProductsProps {
   products?: Product[];
 }
@@ -16,12 +121,12 @@ export default function Products({ products: initialProducts }: ProductsProps) {
   const [hoveredProduct, setHoveredProduct] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [isMobile, setIsMobile] = useState(false);
-  const [products, setProducts] = useState<Product[]>(initialProducts || []);
-  const [isLoading, setIsLoading] = useState(!initialProducts);
+  const [products, setProducts] = useState<Product[]>(initialProducts || staticProducts);
+  const [isLoading, setIsLoading] = useState(false);
   const { addToCart, isInCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
-  // Fetch products from API if not provided as props
+  // Fetch products from API, use static fallback if fails
   useEffect(() => {
     if (!initialProducts) {
       const fetchProducts = async () => {
@@ -29,12 +134,12 @@ export default function Products({ products: initialProducts }: ProductsProps) {
           const response = await fetch('/api/products');
           if (response.ok) {
             const data = await response.json();
-            setProducts(data.products || []);
+            if (data.products && data.products.length > 0) {
+              setProducts(data.products);
+            }
           }
         } catch (error) {
-          console.error('Failed to fetch products:', error);
-        } finally {
-          setIsLoading(false);
+          console.error('Failed to fetch products, using static data:', error);
         }
       };
       fetchProducts();

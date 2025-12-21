@@ -169,6 +169,7 @@ export default function SB106LandingPage() {
       const salesNumbers = process.env.NEXT_PUBLIC_SALES_NUMBERS?.split(',');
       const googleScriptUrl = process.env.NEXT_PUBLIC_GOOGLE_SCRIPT_URL;
       const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '9779802359033';
+      const messengerPageId = process.env.NEXT_PUBLIC_MESSENGER_PAGE_ID || '368155539704608';
 
       // Send SMS notifications (show for at least 800ms)
       if (smsAuthToken && salesNumbers) {
@@ -181,9 +182,11 @@ export default function SB106LandingPage() {
       setProcessingStep(2);
       
       // Send to Google Sheets (show for at least 800ms)
+      // Note: If user is in Facebook/Instagram/Messenger, redirects to Messenger instead of WhatsApp
       await minStepTime(handleOrderSubmission(orderData, {
         googleScriptUrl,
-        whatsappNumber
+        whatsappNumber,
+        messengerPageId
       }), 800);
       
       // Step 3: Redirecting

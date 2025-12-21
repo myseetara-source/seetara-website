@@ -63,7 +63,8 @@ export default function Header({ onClaimOffer }: HeaderProps) {
             width={120}
             height={32}
             className="h-8 w-auto object-contain"
-            unoptimized
+            priority
+            quality={90}
           />
           <button onClick={onClaimOffer} className="bg-black text-white px-4 py-2 rounded-full font-bold text-xs shadow-lg active:scale-95 transition-transform">
             Claim Offer

@@ -349,11 +349,14 @@ export default function Products({ products: initialProducts }: ProductsProps) {
                       src={product.image}
                       alt={product.name}
                       fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       className={`object-cover transition-opacity duration-400 ${
                         hoveredProduct === product.id && product.hoverImage
                           ? "opacity-0"
                           : "opacity-100"
                       }`}
+                      loading={index < 4 ? "eager" : "lazy"}
+                      quality={85}
                     />
                   </motion.div>
                   
@@ -371,7 +374,10 @@ export default function Products({ products: initialProducts }: ProductsProps) {
                         src={product.hoverImage}
                         alt={`${product.name} Detail`}
                         fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         className="object-cover"
+                        loading="lazy"
+                        quality={85}
                       />
                     </motion.div>
                   )}

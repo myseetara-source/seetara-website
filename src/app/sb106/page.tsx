@@ -1,7 +1,6 @@
 import { Metadata } from 'next';
 import { Suspense } from 'react';
 import SB106LandingPage from '@/components/sb106/SB106LandingPage';
-import { productColors, products } from '@/components/sb106/utils/constants';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://seetara.com.np'),
@@ -32,15 +31,9 @@ export const metadata: Metadata = {
 };
 
 export default function SB106Page() {
-  // Preload first product image for faster initial load
-  const firstProductImage = products[productColors[0]].image;
-  
   return (
-    <>
-      <link rel="preload" as="image" href={firstProductImage} />
-      <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
-        <SB106LandingPage />
-      </Suspense>
-    </>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <SB106LandingPage />
+    </Suspense>
   );
 }

@@ -3,12 +3,12 @@
 
 const R2_BASE_URL = 'https://pub-618cb6a991114e6b97382558a5b2adea.r2.dev/SB106';
 
-// Product images by color - Cloudflare R2 URLs
+// Product images by color - Cloudflare R2 URLs (Compressed versions for faster loading)
 export const R2_IMAGE_URLS: Record<string, string> = {
-  'Brown': `${R2_BASE_URL}/brown-handbag.jpg`,
-  'Black': `${R2_BASE_URL}/black-handbag.jpg`,
-  'Maroon': `${R2_BASE_URL}/maroon-handbag.jpg`,
-  'Coffee': `${R2_BASE_URL}/coffee-handbag.jpg`,
+  'Brown': 'https://pub-618cb6a991114e6b97382558a5b2adea.r2.dev/SB106/brown-handbag.jpg',
+  'Coffee': 'https://pub-618cb6a991114e6b97382558a5b2adea.r2.dev/SB106/coffee-handbag.jpg',
+  'Maroon': 'https://pub-618cb6a991114e6b97382558a5b2adea.r2.dev/SB106/maroon-handbag.jpg',
+  'Black': 'https://pub-618cb6a991114e6b97382558a5b2adea.r2.dev/SB106/black-handbag.jpg',
 };
 
 // Seetara Brand Logo - Cloudflare R2 URL

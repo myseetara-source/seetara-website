@@ -3,12 +3,12 @@
 
 const R2_BASE_URL = 'https://pub-618cb6a991114e6b97382558a5b2adea.r2.dev/SB106';
 
-// Product images by color - Cloudflare R2 URLs (Compressed versions for faster loading)
+// Product images by color - Cloudflare R2 URLs (Compressed WebP for faster loading ~80-95KB each)
 export const R2_IMAGE_URLS: Record<string, string> = {
-  'Brown': 'https://pub-618cb6a991114e6b97382558a5b2adea.r2.dev/SB106/brown-handbag.jpg',
-  'Coffee': 'https://pub-618cb6a991114e6b97382558a5b2adea.r2.dev/SB106/coffee-handbag.jpg',
-  'Maroon': 'https://pub-618cb6a991114e6b97382558a5b2adea.r2.dev/SB106/maroon-handbag.jpg',
-  'Black': 'https://pub-618cb6a991114e6b97382558a5b2adea.r2.dev/SB106/black-handbag.jpg',
+  'Brown': 'https://pub-618cb6a991114e6b97382558a5b2adea.r2.dev/SB106/brown-handbag.webp',
+  'Coffee': 'https://pub-618cb6a991114e6b97382558a5b2adea.r2.dev/SB106/coffee-handbag.webp',
+  'Maroon': 'https://pub-618cb6a991114e6b97382558a5b2adea.r2.dev/SB106/maroon-handbag.webp',
+  'Black': 'https://pub-618cb6a991114e6b97382558a5b2adea.r2.dev/SB106/black-handbag.webp',
 };
 
 // Seetara Brand Logo - Cloudflare R2 URL

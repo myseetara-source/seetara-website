@@ -28,23 +28,17 @@ export default function Hero({
   const currentProduct = products[currentColor];
   const videoUrl = getVideoUrl();
 
+  // Preload ALL product images on mount for instant color switching
   useEffect(() => {
-    const preloadImages = () => {
-      const nextIndex = (selectedColorIndex + 1) % productColors.length;
-      const prevIndex = (selectedColorIndex - 1 + productColors.length) % productColors.length;
-      
-      const nextColor = productColors[nextIndex];
-      const prevColor = productColors[prevIndex];
-      
-      const nextImg = new window.Image();
-      nextImg.src = products[nextColor].image;
-      
-      const prevImg = new window.Image();
-      prevImg.src = products[prevColor].image;
+    const preloadAllImages = () => {
+      productColors.forEach((color) => {
+        const img = new window.Image();
+        img.src = products[color].image;
+      });
     };
     
-    preloadImages();
-  }, [selectedColorIndex]);
+    preloadAllImages();
+  }, []); // Only run once on mount
 
   useEffect(() => {
     setImageLoading(true);

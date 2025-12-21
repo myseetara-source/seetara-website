@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import Header from './components/Header';
 import Notification from './components/Notification';
 import Hero from './components/Hero';
 import Features from './components/Features';
 import VideoSection from './components/VideoSection';
 import OrderForm from './components/OrderForm';
-import SuccessMessage from './components/SuccessMessage';
 import BottomBar from './components/BottomBar';
 import ProcessingOverlay from './components/ProcessingOverlay';
 import { productColors, products, PRODUCT_SKU, fakeNames, fakeCities } from './utils/constants';
@@ -15,14 +15,12 @@ import { sendOrderNotifications } from './utils/smsService';
 import { handleOrderSubmission } from './utils/googleSheetsService';
 
 export default function SB106LandingPage() {
+  const router = useRouter();
   const [selectedColorIndex, setSelectedColorIndex] = useState(0);
   const [showVideo, setShowVideo] = useState(false);
   
   const [orderType, setOrderType] = useState('buy'); 
-  const [deliveryLocation, setDeliveryLocation] = useState<string | null>(null); 
-  
-  const [orderPlaced, setOrderPlaced] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(false);
+  const [deliveryLocation, setDeliveryLocation] = useState<string | null>(null);
   
   const [stockLeft, setStockLeft] = useState(12);
   const [viewers, setViewers] = useState(245);
@@ -195,14 +193,22 @@ export default function SB106LandingPage() {
       // Show redirect step before actual redirect
       await new Promise(resolve => setTimeout(resolve, 600));
       
-      // Success!
+      // Success! Redirect to order-success page
       setIsSubmitting(false);
       setProcessingStep(-1);
-      setOrderPlaced(true);
-      setShowConfetti(true);
-      if (typeof window !== 'undefined') {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
+      
+      // Build query params for the success page
+      const successParams = new URLSearchParams({
+        type: orderType,
+        phone: formData.phone,
+        name: formData.name,
+        color: currentColor,
+        total: grandTotal.toString(),
+        address: formData.address,
+        city: formData.city,
+      });
+      
+      router.push(`/order-success?${successParams.toString()}`);
     } catch (error) {
       console.error('Order submission error:', error);
       setIsSubmitting(false);
@@ -215,24 +221,6 @@ export default function SB106LandingPage() {
     const element = document.getElementById('order-form');
     if (element) element.scrollIntoView({ behavior: 'smooth' });
   };
-
-  const handleReset = () => {
-    setOrderPlaced(false);
-    setShowConfetti(false);
-    setFormData({ name: '', phone: '', address: '', city: '' });
-    setOrderType('buy');
-    setDeliveryLocation(null);
-  };
-
-  if (orderPlaced) {
-    return <SuccessMessage 
-      orderType={orderType} 
-      formData={formData} 
-      onReset={handleReset}
-      productColor={currentColor}
-      grandTotal={grandTotal}
-    />;
-  }
 
   return (
     <div className="bg-gray-50 font-sans pb-20 md:pb-10 relative overflow-x-hidden selection:bg-yellow-200">

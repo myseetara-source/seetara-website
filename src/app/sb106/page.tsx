@@ -11,8 +11,8 @@ export const metadata: Metadata = {
   description: 'Looking for a bag that looks expensive but fits your budget? The Seetara Chain Shoulder Bag is the perfect choice for you. It has a beautiful design with a shining gold chain that makes you look stylish instantly.',
   keywords: ['Ladies bag price in Nepal', 'Fancy side bag for girls', 'Party wear purse', 'Seetara bags', 'Online shopping Nepal ladies bag', 'Sasto ra ramro bag', 'Chain wala bag', 'Gift for girlfriend Nepal', 'Ladies Side Bag', 'Seetara Viral Chain Bag', 'Seetara','Made In Nepal Bag','Ladies Side Bag In Nepal'],
   openGraph: {
-    title: '🔥 Limited Offer: Chain Bag @ Rs. 1499/- Only!',
-    description: 'High quality, stylish and perfect for daily use. Available in Black, Maroon & Coffee colors. Tap to order now before stock ends! 🛍️',
+    title: 'Viral Seetara Golden Chain Bag For Ladies In Nepal Rs. 1499/- Only! - Order Now!',
+    description: 'Looking for a bag that looks expensive but fits your budget? The Seetara Chain Shoulder Bag is the perfect choice for you. It has a beautiful design with a shining gold chain that makes you look stylish instantly.',
     type: 'website',
     locale: 'en_US',
     siteName: 'Seetara',
@@ -28,8 +28,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: '🔥 Limited Offer: Chain Bag @ Rs. 1499/- Only!',
-    description: 'High quality, stylish and perfect for daily use. Available in Black, Maroon & Coffee colors. Tap to order now before stock ends! 🛍️',
+    title: 'Viral Seetara Golden Chain Bag For Ladies In Nepal Rs. 1499/- Only! - Order Now!',
+    description: 'Looking for a bag that looks expensive but fits your budget? The Seetara Chain Shoulder Bag is the perfect choice for you. It has a beautiful design with a shining gold chain that makes you look stylish instantly.',
     images: ['/OG-Imagev2.png'],
   },
 };

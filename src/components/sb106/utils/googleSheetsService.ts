@@ -268,29 +268,19 @@ Kripaya malai yo product ko barema thap janakari dinuhola. Thank you!`;
 
 /**
  * Handles the complete submission flow
- * Automatically chooses Messenger over WhatsApp when in Facebook ecosystem
+ * Only saves to Google Sheets - no auto-redirect (customer chooses WhatsApp or Messenger on success page)
  */
 export const handleOrderSubmission = async (
   data: OrderData,
   config: {
     googleScriptUrl?: string;
-    whatsappNumber: string;
-    messengerPageId?: string; // Facebook Page ID for Messenger fallback
+    whatsappNumber?: string;
+    messengerPageId?: string;
   }
 ): Promise<void> => {
-  // Send to Google Sheets
+  // Send to Google Sheets only - no auto-redirect
   if (config.googleScriptUrl) {
     await sendToGoogleSheet(data, config.googleScriptUrl);
-  }
-  
-  // Check if user is in Facebook ecosystem (FB, Messenger, Instagram)
-  // WhatsApp links are often blocked in these in-app browsers
-  if (isInFacebookEcosystem() && config.messengerPageId) {
-    console.log('Detected Facebook ecosystem browser, redirecting to Messenger');
-    redirectToMessenger(data, config.messengerPageId);
-  } else {
-    // Default: Redirect to WhatsApp
-    redirectToWhatsApp(data, config.whatsappNumber);
   }
 };
 

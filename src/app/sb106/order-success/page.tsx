@@ -13,6 +13,13 @@ declare global {
   }
 }
 
+// Facebook Messenger icon component
+const MessengerIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+    <path d="M12 2C6.36 2 2 6.13 2 11.7c0 2.91 1.19 5.44 3.14 7.17.16.13.26.35.27.57l.05 1.78c.04.57.61.94 1.13.71l1.98-.87c.17-.08.36-.1.55-.06.91.25 1.87.38 2.88.38 5.64 0 10-4.13 10-9.7C22 6.13 17.64 2 12 2zm5.89 7.58l-2.88 4.57c-.46.73-1.41.92-2.09.42l-2.29-1.72a.54.54 0 00-.65 0l-3.09 2.34c-.41.31-.95-.16-.68-.59l2.88-4.57c.46-.73 1.41-.92 2.09-.42l2.29 1.72c.2.15.46.15.65 0l3.09-2.34c.41-.31.95.16.68.59z"/>
+  </svg>
+);
+
 function OrderSuccessContent() {
   const searchParams = useSearchParams();
   
@@ -24,6 +31,17 @@ function OrderSuccessContent() {
   const grandTotal = searchParams.get('total') || '0';
   const address = searchParams.get('address') || '';
   const city = searchParams.get('city') || '';
+  const deliveryLocation = searchParams.get('delivery') || ''; // 'inside' or 'outside'
+
+  // Delivery message based on location
+  const getDeliveryMessage = () => {
+    if (deliveryLocation === 'inside') {
+      return 'Delivery within 24 hours';
+    } else if (deliveryLocation === 'outside') {
+      return 'Delivery within 1-2 business days';
+    }
+    return 'Delivery within 3-5 business days';
+  };
 
   // Fire Facebook Pixel Purchase event on page load
   useEffect(() => {
@@ -37,7 +55,7 @@ function OrderSuccessContent() {
     }
   }, [orderType, grandTotal, productColor]);
 
-  // WhatsApp handler
+  // WhatsApp handler - opens WhatsApp with pre-filled message
   const handleWhatsAppClick = () => {
     const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '9779802359033';
     
@@ -102,6 +120,49 @@ Kripaya malai yo product ko barema thap janakari dinuhola. Thank you!`;
     } else {
       window.open(whatsappApiUrl, '_blank');
     }
+  };
+
+  // Messenger handler - opens Messenger with message copied to clipboard
+  const handleMessengerClick = () => {
+    const messengerPageId = process.env.NEXT_PUBLIC_MESSENGER_PAGE_ID || '368155539704608';
+    
+    let message: string;
+    
+    if (orderType === 'buy') {
+      message = `Namaste Seetara Team
+
+Maile hajurko website bata order place gareko chu. Please mero order confirm garidinus.
+
+Order Details:
+• Name: ${name}
+• Phone: ${phone}
+• Product: Seetara Chain Bag
+• Color: ${productColor || 'N/A'}
+• Address: ${address}, ${city}
+• Total: Rs. ${grandTotal}
+
+Delivery kahile huncha? Thank you!`;
+    } else {
+      message = `Namaste Seetara Team
+
+Maile hajurko website ma ${productColor || 'Seetara Chain Bag'} dekhe. Malai yo product barema janna cha.
+
+• Name: ${name}
+• Phone: ${phone}
+
+Kripaya details dinuhola. Thank you!`;
+    }
+
+    // Copy message to clipboard for user to paste
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(message).catch(() => {
+        // Clipboard write failed silently
+      });
+    }
+    
+    // Open Messenger
+    const messengerUrl = `https://m.me/${messengerPageId}`;
+    window.location.href = messengerUrl;
   };
 
   return (
@@ -169,7 +230,7 @@ Kripaya malai yo product ko barema thap janakari dinuhola. Thank you!`;
             <div className="space-y-3 text-sm text-left mb-6">
               <div className="flex items-center gap-3 text-gray-600">
                 <Truck className="w-5 h-5 text-yellow-500" />
-                <span>Delivery within 3-5 business days</span>
+                <span>{getDeliveryMessage()}</span>
               </div>
               <div className="flex items-center gap-3 text-gray-600">
                 <Phone className="w-5 h-5 text-yellow-500" />
@@ -182,13 +243,22 @@ Kripaya malai yo product ko barema thap janakari dinuhola. Thank you!`;
             </div>
           )}
           
-          {/* WhatsApp Connect Button */}
+          {/* WhatsApp Button */}
           <button 
             onClick={handleWhatsAppClick}
             className="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-xl font-bold shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 mb-3"
           >
             <MessageCircle className="w-5 h-5" />
             WhatsApp ma Chat Gara 💬
+          </button>
+          
+          {/* Messenger Button */}
+          <button 
+            onClick={handleMessengerClick}
+            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white py-4 rounded-xl font-bold shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 mb-3"
+          >
+            <MessengerIcon />
+            Messenger ma Chat Gara 💬
           </button>
           
           <Link 
@@ -214,4 +284,3 @@ export default function OrderSuccessPage() {
     </Suspense>
   );
 }
-

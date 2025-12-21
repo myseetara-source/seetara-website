@@ -133,7 +133,7 @@ export default function SB106LandingPage() {
         sku: PRODUCT_SKU,
         price: currentProduct.price, 
         orderType: orderType,
-        deliveryLocation: orderType === 'buy' ? deliveryLocation : 'N/A',
+        deliveryLocation: orderType === 'buy' ? (deliveryLocation || undefined) : undefined,
         deliveryCharge: orderType === 'buy' ? deliveryCharge : 0,
         grandTotal: orderType === 'buy' ? grandTotal : 0,
         date: new Date().toLocaleString() 

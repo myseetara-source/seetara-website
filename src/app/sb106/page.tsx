@@ -3,6 +3,7 @@ import { Suspense } from 'react';
 import SB106LandingPage from '@/components/sb106/SB106LandingPage';
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://seetara.com.np'),
   title: '🔥 Limited Offer: Chain Bag @ Rs. 1499/- Only!',
   description: 'High quality, stylish and perfect for daily use. Available in Black, Maroon & Coffee colors. Tap to order now before stock ends! 🛍️',
   openGraph: {
@@ -11,6 +12,7 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     siteName: 'Seetara',
+    url: 'https://seetara.com.np/sb106',
     images: [
       {
         url: '/OG-Image.png',

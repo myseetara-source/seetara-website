@@ -747,3 +747,65 @@
 .snap-start {
   scroll-snap-align: start;
 }
+
+/* ============================================ */
+/* SB106 Landing Page Custom Styles */
+/* ============================================ */
+
+.glass-nav {
+  @apply bg-white/90 backdrop-blur-md border-b border-white/20;
+}
+
+.glass-card {
+  @apply bg-white/70 backdrop-blur-sm border border-white/50;
+}
+
+.slide-right {
+  animation: slideInRight 0.3s ease-out forwards;
+}
+
+.slide-left {
+  animation: slideInLeft 0.3s ease-out forwards;
+}
+
+.animate-pulse-btn {
+  animation: pulseButton 2s ease-in-out infinite;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Desktop Background Pattern for SB106 */
+@media (min-width: 768px) {
+  .bg-gray-50 {
+    background-color: #f9fafb;
+    background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+}
+
+@keyframes slideInRight {
+  0% { transform: translateX(20px); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideInLeft {
+  0% { transform: translateX(-20px); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes pulseButton {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+/* Safe area for mobile devices */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}

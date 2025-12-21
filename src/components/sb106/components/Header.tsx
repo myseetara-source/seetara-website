@@ -13,6 +13,7 @@ interface HeaderProps {
 export default function Header({ onClaimOffer }: HeaderProps) {
   const [timeLeft, setTimeLeft] = useState({ hours: 4, minutes: 58, seconds: 30 });
   const [logoError, setLogoError] = useState(false);
+  const [useFallback, setUseFallback] = useState(false);
   const logoUrl = getLogoUrl();
   const fallbackLogoUrl = LOGO || 'https://pub-618cb6a991114e6b97382558a5b2adea.r2.dev/website/logo/logo.png'; // Use main website logo as fallback
 
@@ -68,7 +69,7 @@ export default function Header({ onClaimOffer }: HeaderProps) {
             </div>
           ) : (
             <Image 
-              src={logoError ? fallbackLogoUrl : logoUrl} 
+              src={useFallback ? fallbackLogoUrl : logoUrl} 
               alt="Seetara Logo" 
               width={120}
               height={32}
@@ -76,7 +77,11 @@ export default function Header({ onClaimOffer }: HeaderProps) {
               priority
               quality={90}
               onError={() => {
-                if (!logoError) {
+                if (!useFallback) {
+                  // Try fallback logo first
+                  setUseFallback(true);
+                } else {
+                  // If fallback also fails, show text
                   setLogoError(true);
                 }
               }}

@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Loader2 } from 'lucide-react';
 import { Product } from '../utils/constants';
 import { FormEvent } from 'react';
 
@@ -16,6 +16,7 @@ interface BottomBarProps {
     address: string;
     city: string;
   };
+  isSubmitting: boolean;
 }
 
 export default function BottomBar({
@@ -24,7 +25,8 @@ export default function BottomBar({
   grandTotal,
   handleSubmit,
   scrollToOrder,
-  formData
+  formData,
+  isSubmitting
 }: BottomBarProps) {
   return (
     <div className="fixed bottom-0 left-0 right-0 glass-nav border-t border-gray-100 p-3 pb-safe z-50 md:hidden animate-slide-up">
@@ -44,9 +46,19 @@ export default function BottomBar({
           </div>
           <button 
              onClick={formData.name && formData.phone ? handleSubmit : scrollToOrder}
-             className={`${orderType === 'buy' ? 'bg-black' : 'bg-blue-600'} text-white px-6 py-3 rounded-2xl font-bold text-lg shadow-xl shadow-black/20 flex items-center gap-2 active:scale-95 transition-transform animate-pulse-btn`}
+             disabled={isSubmitting}
+             className={`${orderType === 'buy' ? 'bg-black' : 'bg-blue-600'} text-white px-6 py-3 rounded-2xl font-bold text-lg shadow-xl shadow-black/20 flex items-center gap-2 active:scale-95 transition-transform ${isSubmitting ? 'opacity-70 cursor-not-allowed' : 'animate-pulse-btn'}`}
           >
-             {orderType === 'buy' ? 'Order Now' : 'Ask Now'} <ArrowRight className="w-5 h-5" />
+             {isSubmitting ? (
+               <>
+                 <Loader2 className="w-5 h-5 animate-spin" />
+                 Processing...
+               </>
+             ) : (
+               <>
+                 {orderType === 'buy' ? 'Order Now' : 'Ask Now'} <ArrowRight className="w-5 h-5" />
+               </>
+             )}
           </button>
        </div>
     </div>

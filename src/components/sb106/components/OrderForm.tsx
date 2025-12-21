@@ -1,6 +1,6 @@
 'use client';
 
-import { ShoppingBag, HelpCircle, CheckCircle, Phone, AlertCircle, ShieldCheck, ArrowRight } from 'lucide-react';
+import { ShoppingBag, HelpCircle, CheckCircle, Phone, AlertCircle, ShieldCheck, ArrowRight, Loader2 } from 'lucide-react';
 import { Product } from '../utils/constants';
 import { ChangeEvent, FormEvent } from 'react';
 
@@ -181,9 +181,18 @@ export default function OrderForm({
            </div>
          )}
 
-         <button type="submit" disabled={isSubmitting} className="hidden md:flex w-full bg-black text-white py-4 rounded-xl font-bold justify-center items-center gap-2 hover:bg-gray-800 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg hover:shadow-xl">
-            {isSubmitting ? 'Processing...' : (orderType === 'buy' ? 'Confirm Order' : 'Send Inquiry')} 
-            <ArrowRight className="w-5 h-5"/>
+         <button type="submit" disabled={isSubmitting} className={`hidden md:flex w-full bg-black text-white py-4 rounded-xl font-bold justify-center items-center gap-2 transition-all shadow-lg ${isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-gray-800 hover:scale-[1.02] active:scale-[0.98] hover:shadow-xl'}`}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Processing your order...
+              </>
+            ) : (
+              <>
+                {orderType === 'buy' ? 'Confirm Order' : 'Send Inquiry'} 
+                <ArrowRight className="w-5 h-5"/>
+              </>
+            )}
          </button>
          
          <div className="flex flex-col items-center justify-center gap-2 text-xs text-gray-400 mt-4">

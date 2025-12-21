@@ -60,7 +60,53 @@ export const sendToGoogleSheet = async (data: OrderData, scriptUrl?: string): Pr
 };
 
 /**
+ * Detects if the user is on a mobile device
+ */
+const isMobileDevice = (): boolean => {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
+  
+  const userAgent = navigator.userAgent || navigator.vendor || (window as unknown as { opera?: string }).opera || '';
+  
+  // Check for common mobile indicators
+  const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|tablet/i;
+  
+  // Also check for touch capability and screen size
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  const isSmallScreen = window.innerWidth <= 768;
+  
+  return mobileRegex.test(userAgent.toLowerCase()) || (isTouchDevice && isSmallScreen);
+};
+
+/**
+ * Detects if running inside an in-app browser (Facebook, Instagram, Messenger, etc.)
+ */
+const isInAppBrowser = (): boolean => {
+  if (typeof navigator === 'undefined') return false;
+  
+  const userAgent = navigator.userAgent || '';
+  
+  // Common in-app browser identifiers
+  const inAppBrowserPatterns = [
+    'FBAN',      // Facebook App
+    'FBAV',      // Facebook App Version
+    'FB_IAB',    // Facebook In-App Browser
+    'MESSENGER', // Facebook Messenger
+    'Instagram', // Instagram
+    'Twitter',   // Twitter
+    'Line',      // Line App
+    'KAKAOTALK', // KakaoTalk
+    'Snapchat',  // Snapchat
+    'WebView',   // Generic WebView
+  ];
+  
+  return inAppBrowserPatterns.some(pattern => 
+    userAgent.toUpperCase().includes(pattern.toUpperCase())
+  );
+};
+
+/**
  * Opens WhatsApp with pre-filled order/inquiry details message
+ * Uses different strategies for mobile vs desktop and handles in-app browsers
  */
 export const redirectToWhatsApp = (data: OrderData, whatsappNumber: string): void => {
   let message: string;
@@ -92,9 +138,60 @@ Kripaya malai yo product ko barema thap janakari dinuhola. Thank you!`;
   }
 
   const encodedMessage = encodeURIComponent(message);
-  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
   
-  window.open(whatsappUrl, '_blank');
+  // Use api.whatsapp.com for better mobile compatibility
+  const whatsappApiUrl = `https://api.whatsapp.com/send?phone=${whatsappNumber}&text=${encodedMessage}`;
+  const whatsappWaUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+  
+  // For mobile devices or in-app browsers, use location.href for direct navigation
+  // This works better than window.open which gets blocked by popup blockers
+  if (isMobileDevice() || isInAppBrowser()) {
+    // Try intent URL first for Android (opens WhatsApp app directly)
+    const isAndroid = /android/i.test(navigator.userAgent);
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    
+    if (isAndroid) {
+      // Use intent URL for Android - this forces the app to open
+      const intentUrl = `intent://send?phone=${whatsappNumber}&text=${encodedMessage}#Intent;scheme=whatsapp;package=com.whatsapp;end`;
+      
+      // Try to open via intent, fallback to API URL
+      try {
+        window.location.href = intentUrl;
+        // Set a fallback in case intent doesn't work
+        setTimeout(() => {
+          window.location.href = whatsappApiUrl;
+        }, 1500);
+      } catch {
+        window.location.href = whatsappApiUrl;
+      }
+    } else if (isIOS) {
+      // For iOS, use the universal link which opens WhatsApp directly
+      // whatsapp:// scheme works best on iOS
+      const whatsappSchemeUrl = `whatsapp://send?phone=${whatsappNumber}&text=${encodedMessage}`;
+      
+      // Try the app scheme first
+      window.location.href = whatsappSchemeUrl;
+      
+      // Fallback to web URL after short delay if app doesn't open
+      setTimeout(() => {
+        // Check if page is still visible (app didn't open)
+        if (!document.hidden) {
+          window.location.href = whatsappApiUrl;
+        }
+      }, 2000);
+    } else {
+      // For other mobile devices, use direct navigation
+      window.location.href = whatsappApiUrl;
+    }
+  } else {
+    // Desktop: Use window.open for new tab
+    const newWindow = window.open(whatsappWaUrl, '_blank');
+    
+    // Fallback if popup was blocked
+    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+      window.location.href = whatsappWaUrl;
+    }
+  }
 };
 
 /**

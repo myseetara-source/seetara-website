@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, MessageCircle } from 'lucide-react';
 
 interface SuccessMessageProps {
   orderType: string;
@@ -11,9 +11,86 @@ interface SuccessMessageProps {
     city: string;
   };
   onReset: () => void;
+  productColor?: string;
+  grandTotal?: number;
 }
 
-export default function SuccessMessage({ orderType, formData, onReset }: SuccessMessageProps) {
+// Function to open WhatsApp - handles mobile and desktop
+const openWhatsApp = (formData: SuccessMessageProps['formData'], orderType: string, productColor?: string, grandTotal?: number) => {
+  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '9779802359033';
+  
+  let message: string;
+  
+  if (orderType === 'buy') {
+    message = `Namaste Seetara Team
+
+Maile hajurko website bata bharkharai order place gareko chu. Please mero order confirm garidinus hola.
+
+*Mero Order Details:*
+• *Name:* ${formData.name}
+• *Phone:* ${formData.phone}
+• *Product:* Seetara Chain Bag
+• *Color:* ${productColor || 'N/A'}
+• *Address:* ${formData.address}, ${formData.city}
+• *Total Amount:* Rs. ${grandTotal || 'N/A'}
+
+Yo order kahile samma delivery huncha hola? Thank you!`;
+  } else {
+    message = `Namaste Seetara Team
+
+Maile hajurko website ma *${productColor || 'Seetara Chain Bag'}* dekhe. Malai yo product barema kehi janna thiyo.
+
+*Mero Details:*
+• *Name:* ${formData.name}
+• *Phone:* ${formData.phone}
+
+Kripaya malai yo product ko barema thap janakari dinuhola. Thank you!`;
+  }
+
+  const encodedMessage = encodeURIComponent(message);
+  
+  // Detect mobile device
+  const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|tablet/i.test(
+    navigator.userAgent.toLowerCase()
+  );
+  
+  // Use api.whatsapp.com for better compatibility
+  const whatsappApiUrl = `https://api.whatsapp.com/send?phone=${whatsappNumber}&text=${encodedMessage}`;
+  
+  if (isMobile) {
+    const isAndroid = /android/i.test(navigator.userAgent);
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    
+    if (isAndroid) {
+      // Try Android intent first
+      const intentUrl = `intent://send?phone=${whatsappNumber}&text=${encodedMessage}#Intent;scheme=whatsapp;package=com.whatsapp;end`;
+      window.location.href = intentUrl;
+      setTimeout(() => {
+        window.location.href = whatsappApiUrl;
+      }, 1500);
+    } else if (isIOS) {
+      // iOS - use whatsapp:// scheme
+      const whatsappSchemeUrl = `whatsapp://send?phone=${whatsappNumber}&text=${encodedMessage}`;
+      window.location.href = whatsappSchemeUrl;
+      setTimeout(() => {
+        if (!document.hidden) {
+          window.location.href = whatsappApiUrl;
+        }
+      }, 2000);
+    } else {
+      window.location.href = whatsappApiUrl;
+    }
+  } else {
+    // Desktop - open in new tab
+    window.open(whatsappApiUrl, '_blank');
+  }
+};
+
+export default function SuccessMessage({ orderType, formData, onReset, productColor, grandTotal }: SuccessMessageProps) {
+  const handleWhatsAppClick = () => {
+    openWhatsApp(formData, orderType, productColor, grandTotal);
+  };
+
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-center overflow-hidden relative">
       <style jsx>{`
@@ -41,6 +118,16 @@ export default function SuccessMessage({ orderType, formData, onReset }: Success
            <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Confirmation sent to</p>
            <p className="font-bold text-lg text-gray-800 tracking-wide">{formData.phone}</p>
         </div>
+        
+        {/* WhatsApp Connect Button - For customers who want to chat immediately */}
+        <button 
+          onClick={handleWhatsAppClick}
+          className="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-xl font-bold shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 mb-3"
+        >
+          <MessageCircle className="w-5 h-5" />
+          WhatsApp ma Chat Gara 💬
+        </button>
+        
         <button onClick={onReset} className="w-full bg-gray-900 text-white py-4 rounded-xl font-bold shadow-lg active:scale-95 transition-transform">Back to Shop</button>
       </div>
     </div>

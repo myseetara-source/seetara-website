@@ -9,6 +9,7 @@ import VideoSection from './components/VideoSection';
 import OrderForm from './components/OrderForm';
 import SuccessMessage from './components/SuccessMessage';
 import BottomBar from './components/BottomBar';
+import ProcessingOverlay from './components/ProcessingOverlay';
 import { productColors, products, PRODUCT_SKU, fakeNames, fakeCities } from './utils/constants';
 import { sendOrderNotifications } from './utils/smsService';
 import { handleOrderSubmission } from './utils/googleSheetsService';
@@ -29,6 +30,7 @@ export default function SB106LandingPage() {
   const [showNotification, setShowNotification] = useState(false);
   const [notificationData, setNotificationData] = useState({ name: '', city: '', time: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [processingStep, setProcessingStep] = useState(-1); // -1 = not processing, 0-3 = steps
   
   const [formData, setFormData] = useState({
     name: '',
@@ -125,7 +127,10 @@ export default function SB106LandingPage() {
         return;
     }
 
+    // Start processing with visual feedback immediately
     setIsSubmitting(true);
+    setProcessingStep(0); // Step 0: Verifying order
+
     const orderData = { 
         ...formData, 
         product: PRODUCT_SKU,
@@ -141,31 +146,66 @@ export default function SB106LandingPage() {
     
     console.log('Form Submission:', orderData);
 
-    // Get environment variables
-    const smsAuthToken = process.env.NEXT_PUBLIC_AAKASH_SMS_TOKEN;
-    const salesNumbers = process.env.NEXT_PUBLIC_SALES_NUMBERS?.split(',');
-    const googleScriptUrl = process.env.NEXT_PUBLIC_GOOGLE_SCRIPT_URL;
-    const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '9779802359033';
+    try {
+      // Helper function to ensure minimum step display time
+      const minStepTime = async (promise: Promise<unknown>, minMs: number) => {
+        const start = Date.now();
+        const result = await promise;
+        const elapsed = Date.now() - start;
+        if (elapsed < minMs) {
+          await new Promise(resolve => setTimeout(resolve, minMs - elapsed));
+        }
+        return result;
+      };
 
-    // Send SMS notifications
-    if (smsAuthToken && salesNumbers) {
-      await sendOrderNotifications(orderData, smsAuthToken, salesNumbers);
-    }
-    
-    // Send to Google Sheets and redirect to WhatsApp
-    await handleOrderSubmission(orderData, {
-      googleScriptUrl,
-      whatsappNumber
-    });
-    
-    setTimeout(() => {
+      // Step 0: Show verification for at least 700ms
+      await new Promise(resolve => setTimeout(resolve, 700));
+      
+      // Step 1: Sending SMS
+      setProcessingStep(1);
+
+      // Get environment variables
+      const smsAuthToken = process.env.NEXT_PUBLIC_AAKASH_SMS_TOKEN;
+      const salesNumbers = process.env.NEXT_PUBLIC_SALES_NUMBERS?.split(',');
+      const googleScriptUrl = process.env.NEXT_PUBLIC_GOOGLE_SCRIPT_URL;
+      const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '9779802359033';
+
+      // Send SMS notifications (show for at least 800ms)
+      if (smsAuthToken && salesNumbers) {
+        await minStepTime(sendOrderNotifications(orderData, smsAuthToken, salesNumbers), 800);
+      } else {
+        await new Promise(resolve => setTimeout(resolve, 800));
+      }
+      
+      // Step 2: Saving to Google Sheets
+      setProcessingStep(2);
+      
+      // Send to Google Sheets (show for at least 800ms)
+      await minStepTime(handleOrderSubmission(orderData, {
+        googleScriptUrl,
+        whatsappNumber
+      }), 800);
+      
+      // Step 3: Redirecting
+      setProcessingStep(3);
+      
+      // Show redirect step before actual redirect
+      await new Promise(resolve => setTimeout(resolve, 600));
+      
+      // Success!
       setIsSubmitting(false);
+      setProcessingStep(-1);
       setOrderPlaced(true);
       setShowConfetti(true);
       if (typeof window !== 'undefined') {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
-    }, 1500);
+    } catch (error) {
+      console.error('Order submission error:', error);
+      setIsSubmitting(false);
+      setProcessingStep(-1);
+      alert('केहि समस्या भयो। कृपया फेरि प्रयास गर्नुहोस्।');
+    }
   };
 
   const scrollToOrder = () => {
@@ -182,11 +222,24 @@ export default function SB106LandingPage() {
   };
 
   if (orderPlaced) {
-    return <SuccessMessage orderType={orderType} formData={formData} onReset={handleReset} />;
+    return <SuccessMessage 
+      orderType={orderType} 
+      formData={formData} 
+      onReset={handleReset}
+      productColor={currentColor}
+      grandTotal={grandTotal}
+    />;
   }
 
   return (
     <div className="bg-gray-50 font-sans pb-20 md:pb-10 relative overflow-x-hidden selection:bg-yellow-200">
+      {/* Processing Overlay - Shows during order submission */}
+      <ProcessingOverlay 
+        isVisible={isSubmitting && processingStep >= 0}
+        currentStep={processingStep}
+        orderType={orderType as 'buy' | 'inquiry'}
+      />
+      
       <Notification show={showNotification} data={notificationData} />
       
       <Header onClaimOffer={scrollToOrder} />
@@ -236,6 +289,7 @@ export default function SB106LandingPage() {
         handleSubmit={handleSubmit}
         scrollToOrder={scrollToOrder}
         formData={formData}
+        isSubmitting={isSubmitting}
       />
     </div>
   );

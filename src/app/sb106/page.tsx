@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     url: 'https://seetara.com.np/sb106',
     images: [
       {
-        url: '/OG-Image.png?v=2',
+        url: '/OG-Imagev2.png',
         width: 1024,
         height: 1024,
         alt: 'Seetara Viral Chain Bag - Limited Offer Rs. 1499/-',
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: '🔥 Limited Offer: Chain Bag @ Rs. 1499/- Only!',
     description: 'High quality, stylish and perfect for daily use. Available in Black, Maroon & Coffee colors. Tap to order now before stock ends! 🛍️',
-    images: ['/OG-Image.png?v=2'],
+    images: ['/OG-Imagev2.png'],
   },
 };
 

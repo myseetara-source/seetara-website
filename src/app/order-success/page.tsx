@@ -262,7 +262,7 @@ Kripaya details dinuhola. Thank you!`;
           </button>
           
           <Link 
-            href="/sb106"
+            href="/"
             className="block w-full bg-gray-900 text-white py-4 rounded-xl font-bold shadow-lg active:scale-95 transition-transform text-center"
           >
             Back to Shop

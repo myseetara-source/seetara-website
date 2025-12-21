@@ -209,7 +209,7 @@ export default function SB106LandingPage() {
         delivery: deliveryLocation || '',
       });
       
-      router.push(`/sb106/order-success?${successParams.toString()}`);
+      router.push(`/order-success?${successParams.toString()}`);
     } catch (error) {
       console.error('Order submission error:', error);
       setIsSubmitting(false);

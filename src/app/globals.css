@@ -898,3 +898,328 @@
   background-size: 200% 100%;
   animation: progress-shimmer 1.5s linear infinite;
 }
+
+/* ============================================ */
+/* SB107 Landing Page Animations */
+/* ============================================ */
+
+/* Notification Slide Animation - Bottom */
+@keyframes notification-slide {
+  0% {
+    transform: translateY(100px) scale(0.9);
+    opacity: 0;
+  }
+  10% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  90% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100px) scale(0.9);
+    opacity: 0;
+  }
+}
+
+.animate-notification-slide {
+  animation: notification-slide 4s ease-in-out forwards;
+}
+
+/* Notification Slide Animation - Top */
+@keyframes notification-slide-top {
+  0% {
+    transform: translateY(-100px) scale(0.9);
+    opacity: 0;
+  }
+  10% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  90% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100px) scale(0.9);
+    opacity: 0;
+  }
+}
+
+.animate-notification-slide-top {
+  animation: notification-slide-top 4s ease-in-out forwards;
+}
+
+/* Fade In Animation */
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Slide Up Animation */
+.animate-slide-up {
+  animation: slideUp 0.5s ease-out forwards;
+}
+
+/* Wiggle Animation for attention */
+@keyframes wiggle {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  50% { transform: translateX(5px); }
+  75% { transform: translateX(-5px); }
+}
+
+.animate-wiggle {
+  animation: wiggle 0.5s ease-in-out;
+}
+
+/* Pulse Scale */
+@keyframes pulse-scale {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+.animate-pulse-scale {
+  animation: pulse-scale 2s ease-in-out infinite;
+}
+
+/* Image Slide Animations */
+.slide-right {
+  animation: slideImageRight 0.3s ease-out forwards;
+}
+
+.slide-left {
+  animation: slideImageLeft 0.3s ease-out forwards;
+}
+
+@keyframes slideImageRight {
+  0% { 
+    transform: translateX(30px) scale(0.95); 
+    opacity: 0; 
+  }
+  100% { 
+    transform: translateX(0) scale(1); 
+    opacity: 1; 
+  }
+}
+
+@keyframes slideImageLeft {
+  0% { 
+    transform: translateX(-30px) scale(0.95); 
+    opacity: 0; 
+  }
+  100% { 
+    transform: translateX(0) scale(1); 
+    opacity: 1; 
+  }
+}
+
+/* Scroll Reveal Animation */
+@keyframes scrollReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.scroll-reveal {
+  animation: scrollReveal 0.6s ease-out forwards;
+}
+
+/* Glow Effect */
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(34, 197, 94, 0.5);
+  }
+}
+
+.animate-glow-pulse {
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+/* CTA Button Pulse Animation */
+@keyframes cta-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 10px 25px -5px rgba(34, 197, 94, 0.4);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 15px 35px -5px rgba(34, 197, 94, 0.5);
+  }
+}
+
+.animate-cta-pulse {
+  animation: cta-pulse 2s ease-in-out infinite;
+}
+
+/* Scroll Mouse Animation */
+@keyframes scroll-mouse {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(4px);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-scroll-mouse {
+  animation: scroll-mouse 1.5s ease-in-out infinite;
+}
+
+/* Order Button Pulse Animation */
+@keyframes order-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 10px 25px -5px rgba(34, 197, 94, 0.5);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 15px 40px -5px rgba(34, 197, 94, 0.7);
+  }
+}
+
+.animate-order-pulse {
+  animation: order-pulse 1.5s ease-in-out infinite;
+}
+
+/* Gentle Bounce for icons */
+@keyframes bounce-gentle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.animate-bounce-gentle {
+  animation: bounce-gentle 1s ease-in-out infinite;
+}
+
+/* Gradient animation for stats bar */
+@keyframes gradient-x {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient-x {
+  background-size: 200% 200%;
+  animation: gradient-x 3s ease infinite;
+}
+
+/* Fast shimmer for progress bar */
+@keyframes shimmer-fast {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+.animate-shimmer-fast {
+  animation: shimmer-fast 1.5s ease-in-out infinite;
+}
+
+/* Floating particles */
+@keyframes float-particle {
+  0%, 100% {
+    transform: translateY(100%) scale(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-50%) scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(-200%) scale(0);
+    opacity: 0;
+  }
+}
+
+.animate-float-particle {
+  animation: float-particle 3s ease-in-out infinite;
+}
+
+/* Notification Pop Animation */
+@keyframes notification-pop {
+  0% {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  15% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  85% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+}
+
+.animate-notification-pop {
+  animation: notification-pop 4s ease-in-out forwards;
+}
+
+/* Fade In Animation */
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.8s ease-out forwards;
+}
+
+/* Safe area padding for iOS */
+.h-safe-area-inset-bottom {
+  height: env(safe-area-inset-bottom, 8px);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Hide scrollbar for mobile but keep functionality */
+@media (max-width: 768px) {
+  body {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  body::-webkit-scrollbar {
+    display: none;
+  }
+}

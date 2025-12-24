@@ -102,6 +102,7 @@ export default function Header({ onClaimOffer }: HeaderProps) {
               height={28}
               className="h-7 w-auto object-contain"
               priority
+              loading="eager"
               quality={90}
               onError={() => {
                 if (!useFallback) {

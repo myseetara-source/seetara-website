@@ -160,6 +160,7 @@ export default function Hero({
                     sizes="(max-width: 768px) 100vw, 50vw"
                     className={`object-contain p-4 ${slideDirection === 'right' ? 'slide-right' : 'slide-left'} ${imageLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
                     priority
+                    loading="eager"
                     quality={90}
                     onLoad={() => setImageLoading(false)}
                     onError={() => {

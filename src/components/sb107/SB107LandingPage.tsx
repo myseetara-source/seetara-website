@@ -243,7 +243,11 @@ export default function SB107LandingPage() {
         source: 'SB107'
       };
 
-      await handleOrderSubmission(orderData);
+      await handleOrderSubmission(orderData, {
+        googleScriptUrl: process.env.NEXT_PUBLIC_GOOGLE_SCRIPT_URL,
+        whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER,
+        messengerPageId: process.env.NEXT_PUBLIC_MESSENGER_PAGE_ID
+      });
       
       await new Promise(resolve => setTimeout(resolve, 600));
       setProcessingStep(3);

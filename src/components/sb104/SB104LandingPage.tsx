@@ -256,29 +256,41 @@ export default function SB104LandingPage() {
       
       setShowProcessing(false);
       
-      // Store order data in sessionStorage and redirect to success page
-      const successData = {
-        orderType,
-        formData,
-        productColor: currentColor,
-        grandTotal
-      };
-      sessionStorage.setItem('sb104_order_data', JSON.stringify(successData));
-      router.push('/sb104/success');
+      // Build success URL with query params for /order-success page (FB Pixel Purchase event)
+      const successParams = new URLSearchParams({
+        type: orderType,
+        name: formData.name,
+        phone: formData.phone,
+        color: currentColor,
+        product: 'Multi-Functional Bag',
+        ...(orderType === 'buy' && {
+          total: grandTotal.toString(),
+          address: formData.address,
+          city: formData.city,
+          delivery: deliveryLocation
+        })
+      });
+      router.push(`/order-success?${successParams.toString()}`);
       
     } catch (error) {
       console.error('Order submission error:', error);
       setShowProcessing(false);
       
       // Still redirect to success page on error (order was likely submitted)
-      const successData = {
-        orderType,
-        formData,
-        productColor: currentColor,
-        grandTotal
-      };
-      sessionStorage.setItem('sb104_order_data', JSON.stringify(successData));
-      router.push('/sb104/success');
+      const successParams = new URLSearchParams({
+        type: orderType,
+        name: formData.name,
+        phone: formData.phone,
+        color: currentColor,
+        product: 'Multi-Functional Bag',
+        ...(orderType === 'buy' && {
+          total: grandTotal.toString(),
+          address: formData.address,
+          city: formData.city,
+          delivery: deliveryLocation
+        })
+      });
+      router.push(`/order-success?${successParams.toString()}`);
     } finally {
       setIsSubmitting(false);
     }

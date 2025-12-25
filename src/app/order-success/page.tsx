@@ -32,6 +32,7 @@ function OrderSuccessContent() {
   const address = searchParams.get('address') || '';
   const city = searchParams.get('city') || '';
   const deliveryLocation = searchParams.get('delivery') || ''; // 'inside' or 'outside'
+  const productName = searchParams.get('product') || 'Seetara Chain Bag'; // Dynamic product name
 
   // Delivery message based on location
   const getDeliveryMessage = () => {
@@ -49,11 +50,11 @@ function OrderSuccessContent() {
       window.fbq('track', 'Purchase', {
         value: parseFloat(grandTotal),
         currency: 'NPR',
-        content_name: `Seetara Chain Bag - ${productColor}`,
+        content_name: `${productName} - ${productColor}`,
         content_type: 'product',
       });
     }
-  }, [orderType, grandTotal, productColor]);
+  }, [orderType, grandTotal, productColor, productName]);
 
   // WhatsApp handler - opens WhatsApp with pre-filled message
   const handleWhatsAppClick = () => {
@@ -69,7 +70,7 @@ Maile hajurko website bata bharkharai order place gareko chu. Please mero order 
 *Mero Order Details:*
 • *Name:* ${name}
 • *Phone:* ${phone}
-• *Product:* Seetara Chain Bag
+• *Product:* ${productName}
 • *Color:* ${productColor || 'N/A'}
 • *Address:* ${address}, ${city}
 • *Total Amount:* Rs. ${grandTotal}
@@ -78,7 +79,7 @@ Yo order kahile samma delivery huncha hola? Thank you!`;
     } else {
       message = `Namaste Seetara Team
 
-Maile hajurko website ma *${productColor || 'Seetara Chain Bag'}* dekhe. Malai yo product barema kehi janna thiyo.
+Maile hajurko website ma *${productName}* dekhe. Malai yo product barema kehi janna thiyo.
 
 *Mero Details:*
 • *Name:* ${name}
@@ -136,7 +137,7 @@ Maile hajurko website bata order place gareko chu. Please mero order confirm gar
 Order Details:
 • Name: ${name}
 • Phone: ${phone}
-• Product: Seetara Chain Bag
+• Product: ${productName}
 • Color: ${productColor || 'N/A'}
 • Address: ${address}, ${city}
 • Total: Rs. ${grandTotal}
@@ -145,7 +146,7 @@ Delivery kahile huncha? Thank you!`;
     } else {
       message = `Namaste Seetara Team
 
-Maile hajurko website ma ${productColor || 'Seetara Chain Bag'} dekhe. Malai yo product barema janna cha.
+Maile hajurko website ma ${productName} dekhe. Malai yo product barema janna cha.
 
 • Name: ${name}
 • Phone: ${phone}
@@ -177,7 +178,7 @@ Kripaya details dinuhola. Thank you!`;
               fbq('track', 'Purchase', {
                 value: ${parseFloat(grandTotal) || 0},
                 currency: 'NPR',
-                content_name: 'Seetara Chain Bag - ${productColor}',
+                content_name: '${productName} - ${productColor}',
                 content_type: 'product'
               });
             }

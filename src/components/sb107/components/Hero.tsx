@@ -78,13 +78,12 @@ export default function Hero({
       
       {/* Product Title */}
       <div className="text-center mb-3">
-        <div className="inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-100 to-orange-100 px-3 py-1 rounded-full shadow-sm border border-amber-200 mb-2">
-          <Zap className="w-3 h-3 text-orange-500" />
-          <span className="text-[10px] font-bold text-orange-700">🔥 Nepal मा Viral</span>
-        </div>
-        <h1 className="text-xl font-black text-gray-900 leading-tight">
-          Seetara Golden Chain Bag
+        <h1 className="text-xl font-black text-gray-900 leading-tight mb-1">
+          Seetara <span className="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 bg-clip-text text-transparent">Golden</span> Chain Bag
         </h1>
+        <p className="text-sm text-gray-600 font-medium">
+          ✨ हेर्दा महँगो, किन्दा सस्तो — सबैले सोध्छन् कहाँबाट किनेको!
+        </p>
       </div>
 
       {/* Product Image Card */}

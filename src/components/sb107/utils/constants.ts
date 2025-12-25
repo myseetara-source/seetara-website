@@ -18,7 +18,7 @@ export interface Product {
 export const products: Record<string, Product> = {
   'Brown': { 
     id: 1, 
-    hex: '#8B5A2B', 
+    hex: '#A0522D', // Sienna brown - rich saturated
     image: getImageUrl('Brown'), 
     price: 1499, 
     originalPrice: 2100, 
@@ -27,7 +27,7 @@ export const products: Record<string, Product> = {
   },
   'Black': { 
     id: 2, 
-    hex: '#222222', 
+    hex: '#1A1A1A', // Deep black
     image: getImageUrl('Black'), 
     price: 1499, 
     originalPrice: 2100, 
@@ -36,7 +36,7 @@ export const products: Record<string, Product> = {
   },
   'Maroon': { 
     id: 3, 
-    hex: '#800000', 
+    hex: '#8B0000', // Dark red - rich maroon
     image: getImageUrl('Maroon'), 
     price: 1499, 
     originalPrice: 2100, 
@@ -45,7 +45,7 @@ export const products: Record<string, Product> = {
   },
   'Coffee': { 
     id: 4, 
-    hex: '#5D4037', 
+    hex: '#6F4E37', // True coffee brown - saturated
     image: getImageUrl('Coffee'), 
     price: 1499, 
     originalPrice: 2100, 

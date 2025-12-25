@@ -12,24 +12,23 @@ interface NotificationProps {
 }
 
 export default function Notification({ show, data }: NotificationProps) {
-  if (!show) return null;
-
   return (
-    <div className="fixed top-20 inset-x-0 z-[60] px-4 flex justify-center animate-notification-pop pointer-events-none">
-      <div className="bg-white shadow-lg rounded-full border border-gray-200 px-4 py-2 flex items-center gap-2 pointer-events-auto">
+    <div className={`fixed top-20 right-3 z-[100] max-w-[85%] transform transition-all duration-500 ${show ? 'translate-x-0 opacity-100' : 'translate-x-[150%] opacity-0 pointer-events-none'}`}>
+      <div className="bg-white/95 backdrop-blur-md shadow-lg rounded-xl p-2 flex items-center gap-2 border border-gray-100">
         {/* Icon */}
-        <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-          <ShoppingBag className="w-3 h-3 text-white" />
+        <div className="bg-green-100 p-1.5 rounded-full shrink-0">
+          <ShoppingBag className="w-4 h-4 text-green-600" />
         </div>
         
         {/* Text */}
-        <p className="text-xs text-gray-700 whitespace-nowrap">
-          <span className="font-bold">{data.name}</span>
-          <span className="text-gray-500"> from </span>
-          <span className="font-semibold">{data.city}</span>
-          <span className="text-green-600 font-bold"> Ordered!</span>
-          <span className="text-gray-400 ml-1 text-[10px]">{data.time}</span>
-        </p>
+        <div className="min-w-0">
+          <p className="text-xs font-bold text-gray-800 truncate">
+            {data.name} <span className="font-normal text-gray-500">from</span> {data.city}
+          </p>
+          <p className="text-[10px] text-gray-500">
+            Just ordered a bag • <span className="text-green-600 font-medium">{data.time}</span>
+          </p>
+        </div>
       </div>
     </div>
   );

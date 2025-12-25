@@ -73,9 +73,9 @@ function FeatureVideoCard({ reason, index, isVisible }: { reason: typeof buyReas
         {reason.number}
       </div>
 
-      {/* Video Container - Dynamic aspect ratio on mobile, square on desktop */}
+      {/* Video Container - Original aspect ratio on mobile, square on desktop */}
       <div 
-        className={`relative ${reason.aspectRatio} lg:aspect-square bg-gray-100`}
+        className={`relative ${reason.aspectRatio} lg:!aspect-square bg-gray-100`}
       >
         {!videoError && videoData.url ? (
           <video
@@ -278,11 +278,26 @@ export default function Features({ stockLeft, viewers }: FeaturesProps) {
           </div>
         </div>
 
-        {/* Video Grid - 2 cols mobile, 3 cols desktop */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        {/* Mobile: 2 cols for first 2, then 1 full width | Desktop: 3 cols */}
+        {/* Desktop Layout */}
+        <div className="hidden lg:grid lg:grid-cols-3 gap-3">
           {buyReasons.map((reason, index) => (
             <FeatureVideoCard key={reason.id} reason={reason} index={index} isVisible={isVideoSectionVisible} />
           ))}
+        </div>
+
+        {/* Mobile Layout - Original */}
+        <div className="lg:hidden">
+          <div className="grid grid-cols-2 gap-3">
+            {buyReasons.slice(0, 2).map((reason, index) => (
+              <FeatureVideoCard key={reason.id} reason={reason} index={index} isVisible={isVideoSectionVisible} />
+            ))}
+          </div>
+          
+          {/* 3rd Reason - Full Width (3:4 ratio) */}
+          <div className="mt-3">
+            <FeatureVideoCard reason={buyReasons[2]} index={2} isVisible={isVideoSectionVisible} />
+          </div>
         </div>
 
         {/* Bottom CTA */}

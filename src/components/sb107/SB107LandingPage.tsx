@@ -166,10 +166,14 @@ export default function SB107LandingPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Fluctuate viewers
+  // Fluctuate viewers (min 50, max 800)
   useEffect(() => {
     const interval = setInterval(() => {
-      setViewers(prev => prev + Math.floor(Math.random() * 20) - 10);
+      setViewers(prev => {
+        const change = Math.floor(Math.random() * 20) - 8; // -8 to +11
+        const newValue = prev + change;
+        return Math.max(50, Math.min(800, newValue)); // Keep between 50-800
+      });
     }, 5000);
     return () => clearInterval(interval);
   }, []);

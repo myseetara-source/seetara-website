@@ -400,8 +400,8 @@ export default function SB107LandingPage() {
           />
         </section>
 
-        {/* Bottom Spacing for Fixed Bar */}
-        <div className="h-24 md:hidden"></div>
+        {/* Bottom Spacing for Fixed Bar - only when bar is visible */}
+        {!isFormVisible && <div className="h-20 md:hidden"></div>}
       </main>
 
       {/* Fixed Bottom Bar - HIDE when form is visible */}

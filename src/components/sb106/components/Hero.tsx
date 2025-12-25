@@ -73,30 +73,30 @@ export default function Hero({
   };
 
   return (
-    <div className="px-3 pt-0 pb-1 overflow-hidden mt-1 md:px-0 md:mt-0"> 
-      <div className={`relative rounded-2xl bg-gray-50 shadow-lg overflow-hidden mb-1 group cursor-zoom-in ${showVideo ? 'aspect-[3/4]' : 'aspect-[4/5]'} transition-all duration-300`}> 
-        <div className="absolute top-2 left-2 z-20 bg-red-500 text-white px-2 py-0.5 rounded-full text-[10px] font-bold shadow-md animate-pulse">
-          -30% OFF
+    <div className="px-4 pt-0 pb-2 overflow-hidden mt-2 md:px-0 md:mt-0"> 
+      <div className={`relative rounded-[2rem] bg-gray-50 shadow-xl shadow-gray-200/50 overflow-hidden mb-2 group cursor-zoom-in ${showVideo ? 'aspect-[3/4]' : 'aspect-square'} transition-all duration-300`}> 
+        <div className="absolute top-4 left-4 z-20 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md animate-pulse">
+          -30% DISCOUNT
         </div>
 
-        <button onClick={handlePrev} className="absolute left-1 top-1/2 -translate-y-1/2 z-30 p-1.5 bg-white/80 backdrop-blur-sm rounded-full shadow-md hover:bg-white active:scale-95 transition-all">
-           <ChevronLeft className="w-5 h-5 text-gray-800" />
+        <button onClick={handlePrev} className="absolute left-2 top-1/2 -translate-y-1/2 z-30 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md hover:bg-white active:scale-95 transition-all opacity-0 group-hover:opacity-100 duration-300">
+           <ChevronLeft className="w-6 h-6 text-gray-800" />
         </button>
-        <button onClick={handleNext} className="absolute right-1 top-1/2 -translate-y-1/2 z-30 p-1.5 bg-white/80 backdrop-blur-sm rounded-full shadow-md hover:bg-white active:scale-95 transition-all">
-           <ChevronRight className="w-5 h-5 text-gray-800" />
+        <button onClick={handleNext} className="absolute right-2 top-1/2 -translate-y-1/2 z-30 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md hover:bg-white active:scale-95 transition-all opacity-0 group-hover:opacity-100 duration-300">
+           <ChevronRight className="w-6 h-6 text-gray-800" />
         </button>
 
         {!showVideo && (
            <button 
              onClick={() => setShowVideo(true)}
-             className="absolute top-2 right-2 z-20 bg-black/40 backdrop-blur-md text-white px-2 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 transition-all"
+             className="absolute top-4 right-4 z-20 bg-black/30 hover:bg-black/50 backdrop-blur-md text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all border border-white/20 hover:scale-105"
            >
-              <Play className="w-2.5 h-2.5 fill-current" /> Video
+              <Play className="w-3 h-3 fill-current" /> Watch Video
            </button>
         )}
 
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 bg-[#FFFACD]/95 backdrop-blur-sm text-[#8B4513] px-2 py-0.5 rounded-full flex items-center gap-1 text-[9px] font-black tracking-wide shadow-md border border-[#F0E68C]">
-           <Star className="w-2.5 h-2.5 fill-current" /> BEST SELLER
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 bg-[#FFFACD]/95 backdrop-blur-sm text-[#8B4513] px-3 py-1 rounded-full flex items-center gap-1 text-[10px] font-black tracking-wide shadow-md border border-[#F0E68C] animate-pulse whitespace-nowrap">
+           <Star className="w-3 h-3 fill-current" /> BEST SELLER
         </div>
 
         <div className={`w-full h-full transition-all duration-300 ${isAnimating ? 'opacity-50 scale-95' : 'opacity-100 scale-100'}`}>
@@ -155,30 +155,33 @@ export default function Hero({
               </div>
            )}
         </div>
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/5 to-transparent h-20 pointer-events-none"></div>
       </div>
 
-      <div className="mb-1 flex flex-col items-center">
-        <p className="text-[9px] font-bold text-gray-400 uppercase mb-1 tracking-widest">Choose Color</p>
-        <div className="flex gap-2 items-center bg-white p-1 rounded-full shadow-sm border border-gray-100">
+      <div className="mb-2 flex flex-col items-center">
+        <p className="text-[10px] font-bold text-gray-400 uppercase mb-2 tracking-widest">Choose Color</p>
+        <div className="flex gap-3 items-center bg-white p-1.5 rounded-full shadow-sm border border-gray-100">
           {productColors.map((color, index) => (
             <button
               key={color}
               onClick={() => handleColorSelect(index)}
-              className={`relative w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
+              className={`relative w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
                 selectedColorIndex === index 
-                  ? 'ring-2 ring-offset-1 ring-gray-400 shadow-lg scale-110' 
+                  ? 'ring-2 ring-offset-2 ring-gray-400 shadow-xl scale-110' 
                   : 'hover:scale-105 opacity-90'
               }`}
               style={{ backgroundColor: products[color].hex }}
               title={color}
             >
               {selectedColorIndex === index && (
-                 <Check className="w-3 h-3 text-white drop-shadow-md" strokeWidth={3} />
+                 <div className="bg-white/20 rounded-full p-1 backdrop-blur-sm">
+                    <Check className="w-4 h-4 text-white drop-shadow-md" strokeWidth={3} />
+                 </div>
               )}
             </button>
           ))}
         </div>
-        <p className="mt-0.5 text-xs font-bold text-gray-800">{currentColor}</p>
+        <p className="mt-1 text-sm font-bold text-gray-800">{currentColor}</p>
       </div>
     </div>
   );

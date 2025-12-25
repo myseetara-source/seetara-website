@@ -74,47 +74,47 @@ export default function Hero({
   };
 
   return (
-    <div className="px-4 pt-2 pb-3 overflow-hidden md:px-0"> 
+    <div className="px-3 pt-1 pb-1 overflow-hidden md:px-0"> 
       
       {/* Product Title */}
-      <div className="text-center mb-3">
-        <h1 className="text-xl font-black text-gray-900 leading-tight mb-1">
+      <div className="text-center mb-1">
+        <h1 className="text-lg font-black text-gray-900 leading-tight">
           Seetara <span className="bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 bg-clip-text text-transparent">Golden</span> Chain Bag
         </h1>
-        <p className="text-sm text-gray-600 font-medium">
+        <p className="text-xs text-gray-600 font-medium">
           ✨ हेर्दा महँगो, किन्दा सस्तो — सबैले सोध्छन् कहाँबाट किनेको!
         </p>
       </div>
 
       {/* Product Image Card */}
-      <div className={`relative rounded-3xl bg-gradient-to-b from-white to-gray-50 shadow-xl overflow-hidden mb-3 group ${showVideo ? 'aspect-[3/4]' : 'aspect-square'} transition-all duration-300 border border-gray-100`}> 
+      <div className={`relative rounded-2xl bg-gradient-to-b from-white to-gray-50 shadow-lg overflow-hidden mb-1 group ${showVideo ? 'aspect-[3/4]' : 'aspect-[4/5]'} transition-all duration-300 border border-gray-100`}> 
         
         {/* Discount Badge */}
-        <div className="absolute top-3 left-3 z-20 bg-gradient-to-r from-red-500 to-orange-500 text-white px-2.5 py-1 rounded-full text-xs font-black shadow-lg flex items-center gap-1">
-          <Zap className="w-3 h-3" /> ३०% OFF
+        <div className="absolute top-2 left-2 z-20 bg-gradient-to-r from-red-500 to-orange-500 text-white px-2 py-0.5 rounded-full text-[10px] font-black shadow-lg flex items-center gap-0.5">
+          <Zap className="w-2.5 h-2.5" /> ३०% OFF
         </div>
 
         {/* Navigation Arrows */}
-        <button onClick={handlePrev} className="absolute left-2 top-1/2 -translate-y-1/2 z-30 p-2 bg-white/95 backdrop-blur-sm rounded-full shadow-lg hover:bg-white active:scale-90 transition-all">
-           <ChevronLeft className="w-5 h-5 text-gray-800" />
+        <button onClick={handlePrev} className="absolute left-1 top-1/2 -translate-y-1/2 z-30 p-1.5 bg-white/95 backdrop-blur-sm rounded-full shadow-lg hover:bg-white active:scale-90 transition-all">
+           <ChevronLeft className="w-4 h-4 text-gray-800" />
         </button>
-        <button onClick={handleNext} className="absolute right-2 top-1/2 -translate-y-1/2 z-30 p-2 bg-white/95 backdrop-blur-sm rounded-full shadow-lg hover:bg-white active:scale-90 transition-all">
-           <ChevronRight className="w-5 h-5 text-gray-800" />
+        <button onClick={handleNext} className="absolute right-1 top-1/2 -translate-y-1/2 z-30 p-1.5 bg-white/95 backdrop-blur-sm rounded-full shadow-lg hover:bg-white active:scale-90 transition-all">
+           <ChevronRight className="w-4 h-4 text-gray-800" />
         </button>
 
         {/* Video Button */}
         {!showVideo && (
            <button 
              onClick={() => setShowVideo(true)}
-             className="absolute top-3 right-3 z-20 bg-black/80 hover:bg-black text-white px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1 transition-all shadow-lg"
+             className="absolute top-2 right-2 z-20 bg-black/80 hover:bg-black text-white px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-0.5 transition-all shadow-lg"
            >
-              <Play className="w-3 h-3 fill-current" /> Video
+              <Play className="w-2.5 h-2.5 fill-current" /> Video
            </button>
         )}
 
         {/* Best Seller Badge */}
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 bg-gradient-to-r from-yellow-400 to-amber-500 text-white px-3 py-1 rounded-full flex items-center gap-1 text-xs font-black shadow-lg border-2 border-white">
-           <Star className="w-3 h-3 fill-current" /> Bestseller
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 bg-gradient-to-r from-yellow-400 to-amber-500 text-white px-2 py-0.5 rounded-full flex items-center gap-0.5 text-[10px] font-black shadow-lg border border-white">
+           <Star className="w-2.5 h-2.5 fill-current" /> Bestseller
         </div>
 
         {/* Image/Video Container */}
@@ -173,19 +173,19 @@ export default function Hero({
         </div>
       </div>
 
-      {/* Color Selector - English Label */}
-      <div className="mb-3 flex flex-col items-center">
-        <p className="text-xs font-semibold text-gray-600 mb-2">
-          Choose Your Color
+      {/* Color Selector - Compact */}
+      <div className="mb-1 flex flex-col items-center">
+        <p className="text-[9px] font-semibold text-gray-500 uppercase mb-1 tracking-wide">
+          Choose Color
         </p>
-        <div className="flex gap-2 items-center bg-white p-2 rounded-full shadow-md border border-gray-100">
+        <div className="flex gap-2 items-center bg-white p-1 rounded-full shadow-sm border border-gray-100">
           {productColors.map((color, index) => (
             <button
               key={color}
               onClick={() => handleColorSelect(index)}
-              className={`relative w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+              className={`relative w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
                 selectedColorIndex === index 
-                  ? 'ring-2 ring-offset-2 ring-green-500 shadow-lg scale-110' 
+                  ? 'ring-2 ring-offset-1 ring-green-500 shadow-lg scale-110' 
                   : 'hover:scale-105 opacity-70 hover:opacity-100'
               }`}
               style={{ backgroundColor: products[color].hex }}
@@ -193,32 +193,26 @@ export default function Hero({
             />
           ))}
         </div>
-        {/* Selected Color Text - English + Nepali */}
-        <p className="mt-2 text-xs text-gray-600">
-          You selected: <span className="font-bold text-gray-900">{currentProduct.label}</span>
+        <p className="mt-0.5 text-[10px] text-gray-600">
+          <span className="font-bold text-gray-900">{currentProduct.label}</span>
           <span className="text-gray-400 mx-1">•</span>
-          <span className="text-gray-500">{currentProduct.labelNp} छानियो</span>
+          <span className="text-gray-500">{currentProduct.labelNp}</span>
         </p>
       </div>
 
-      {/* Price & CTA Section */}
-      <div className="bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50 rounded-2xl p-4 border border-green-200 shadow-lg">
+      {/* Price & CTA Section - Compact */}
+      <div className="bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50 rounded-xl p-3 border border-green-200 shadow-md">
         {/* Price Display */}
-        <div className="flex items-center justify-center gap-3 mb-2">
-          <div className="text-center">
-            <span className="text-gray-400 text-sm line-through">रु. {currentProduct.originalPrice}</span>
-            <span className="text-[10px] text-red-500 font-bold ml-1">-30%</span>
-          </div>
-          <div className="text-center">
-            <span className="text-3xl font-black text-green-600">रु. {currentProduct.price}</span>
-            <span className="text-green-600 font-bold">/-</span>
-          </div>
+        <div className="flex items-center justify-center gap-2 mb-1">
+          <span className="text-gray-400 text-xs line-through">रु. {currentProduct.originalPrice}</span>
+          <span className="text-2xl font-black text-green-600">रु. {currentProduct.price}/-</span>
+          <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">-30%</span>
         </div>
         
         {/* Savings Badge */}
-        <div className="flex justify-center mb-3">
-          <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-md">
-            <Sparkles className="w-3 h-3" />
+        <div className="flex justify-center mb-2">
+          <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-sm">
+            <Sparkles className="w-2.5 h-2.5" />
             तपाईंको रु. {savings}/- बचत!
           </div>
         </div>
@@ -226,14 +220,14 @@ export default function Hero({
         {/* Order Now CTA Button */}
         <button 
           onClick={scrollToOrder}
-          className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white py-3.5 rounded-xl font-bold text-base flex items-center justify-center gap-2 shadow-xl transition-all active:scale-[0.98] animate-cta-pulse"
+          className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-1.5 shadow-lg transition-all active:scale-[0.98] animate-cta-pulse"
         >
-          <ShoppingCart className="w-5 h-5" />
+          <ShoppingCart className="w-4 h-4" />
           अहिले Order गर्नुहोस्!
         </button>
         
         {/* Trust Text */}
-        <p className="text-center text-[10px] text-gray-500 mt-2">
+        <p className="text-center text-[9px] text-gray-500 mt-1.5">
           💵 Cash on Delivery • 🎁 Free Makeup Purse
         </p>
       </div>

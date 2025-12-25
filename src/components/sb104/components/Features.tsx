@@ -73,9 +73,9 @@ function FeatureVideoCard({ reason, index, isVisible }: { reason: typeof buyReas
         {reason.number}
       </div>
 
-      {/* Video Container - Original aspect ratio on mobile, square on desktop */}
+      {/* Video Container - Original aspect ratio on mobile, fixed height on desktop */}
       <div 
-        className={`relative ${reason.aspectRatio} lg:!aspect-square bg-gray-100`}
+        className={`relative ${reason.aspectRatio} lg:!aspect-[4/5] bg-gray-100`}
       >
         {!videoError && videoData.url ? (
           <video
@@ -147,7 +147,7 @@ export default function Features({ stockLeft, viewers }: FeaturesProps) {
   }, []);
 
   return (
-    <div className="px-4 py-4 space-y-4 lg:py-8 lg:space-y-6">
+    <div className="px-4 py-4 space-y-4 lg:py-6 lg:space-y-5 lg:px-0">
       
       {/* LIVE STATS BAR */}
       <div className={`relative rounded-2xl overflow-hidden shadow-xl transition-all duration-700 ${isStatsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
@@ -234,53 +234,53 @@ export default function Features({ stockLeft, viewers }: FeaturesProps) {
       </div>
 
       {/* TRUST BADGES */}
-      <div className="grid grid-cols-4 gap-2">
-        <div className="bg-white rounded-xl p-3 text-center shadow-sm border border-gray-100">
-          <div className="w-10 h-10 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-2">
-            <Eye className="w-5 h-5 text-green-600" />
+      <div className="grid grid-cols-4 gap-2 lg:gap-4">
+        <div className="bg-white rounded-xl p-3 lg:p-4 text-center shadow-sm border border-gray-100">
+          <div className="w-10 h-10 lg:w-12 lg:h-12 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-2">
+            <Eye className="w-5 h-5 lg:w-6 lg:h-6 text-green-600" />
           </div>
-          <p className="text-[10px] font-bold text-gray-800">Check</p>
-          <p className="text-[9px] text-gray-500">& Pay</p>
+          <p className="text-[10px] lg:text-xs font-bold text-gray-800">Check</p>
+          <p className="text-[9px] lg:text-[10px] text-gray-500">& Pay</p>
         </div>
         
-        <div className="bg-white rounded-xl p-3 text-center shadow-sm border border-gray-100">
-          <div className="w-10 h-10 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-2">
-            <Truck className="w-5 h-5 text-blue-600" />
+        <div className="bg-white rounded-xl p-3 lg:p-4 text-center shadow-sm border border-gray-100">
+          <div className="w-10 h-10 lg:w-12 lg:h-12 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-2">
+            <Truck className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600" />
           </div>
-          <p className="text-[10px] font-bold text-gray-800">Fast</p>
-          <p className="text-[9px] text-gray-500">Delivery</p>
+          <p className="text-[10px] lg:text-xs font-bold text-gray-800">Fast</p>
+          <p className="text-[9px] lg:text-[10px] text-gray-500">Delivery</p>
         </div>
         
-        <div className="bg-white rounded-xl p-3 text-center shadow-sm border border-gray-100">
-          <div className="w-10 h-10 mx-auto bg-yellow-100 rounded-full flex items-center justify-center mb-2">
-            <Award className="w-5 h-5 text-yellow-600" />
+        <div className="bg-white rounded-xl p-3 lg:p-4 text-center shadow-sm border border-gray-100">
+          <div className="w-10 h-10 lg:w-12 lg:h-12 mx-auto bg-yellow-100 rounded-full flex items-center justify-center mb-2">
+            <Award className="w-5 h-5 lg:w-6 lg:h-6 text-yellow-600" />
           </div>
-          <p className="text-[10px] font-bold text-gray-800">Premium</p>
-          <p className="text-[9px] text-gray-500">Quality</p>
+          <p className="text-[10px] lg:text-xs font-bold text-gray-800">Premium</p>
+          <p className="text-[9px] lg:text-[10px] text-gray-500">Quality</p>
         </div>
         
-        <div className="bg-white rounded-xl p-3 text-center shadow-sm border border-gray-100">
-          <div className="w-10 h-10 mx-auto bg-purple-100 rounded-full flex items-center justify-center mb-2">
-            <Briefcase className="w-5 h-5 text-purple-600" />
+        <div className="bg-white rounded-xl p-3 lg:p-4 text-center shadow-sm border border-gray-100">
+          <div className="w-10 h-10 lg:w-12 lg:h-12 mx-auto bg-purple-100 rounded-full flex items-center justify-center mb-2">
+            <Briefcase className="w-5 h-5 lg:w-6 lg:h-6 text-purple-600" />
           </div>
-          <p className="text-[10px] font-bold text-gray-800">Laptop</p>
-          <p className="text-[9px] text-gray-500">Fits 15"</p>
+          <p className="text-[10px] lg:text-xs font-bold text-gray-800">Laptop</p>
+          <p className="text-[9px] lg:text-[10px] text-gray-500">Fits 15"</p>
         </div>
       </div>
 
       {/* 3 REASONS TO BUY - VIDEO SHOWCASE */}
-      <div ref={videoSectionRef} className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-4 border border-gray-200 shadow-sm">
+      <div ref={videoSectionRef} className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-4 lg:p-6 border border-gray-200 shadow-sm">
         {/* Header */}
-        <div className="text-center mb-4">
-          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-4 py-1.5 rounded-full text-sm font-black shadow-lg">
-            <Sparkles className="w-4 h-4" />
+        <div className="text-center mb-4 lg:mb-6">
+          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-4 py-1.5 lg:px-6 lg:py-2 rounded-full text-sm lg:text-base font-black shadow-lg">
+            <Sparkles className="w-4 h-4 lg:w-5 lg:h-5" />
             3 Reasons to Buy
           </div>
         </div>
 
         {/* Mobile: 2 cols for first 2, then 1 full width | Desktop: 3 cols */}
         {/* Desktop Layout */}
-        <div className="hidden lg:grid lg:grid-cols-3 gap-3">
+        <div className="hidden lg:grid lg:grid-cols-3 gap-4">
           {buyReasons.map((reason, index) => (
             <FeatureVideoCard key={reason.id} reason={reason} index={index} isVisible={isVideoSectionVisible} />
           ))}
@@ -309,7 +309,7 @@ export default function Features({ stockLeft, viewers }: FeaturesProps) {
       </div>
 
       {/* CUSTOMER LOVE - COMPACT HORIZONTAL */}
-      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-3 border border-emerald-100">
+      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-3 lg:p-5 border border-emerald-100">
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-black text-gray-900 text-xs flex items-center gap-1.5">
             <Quote className="w-4 h-4 text-emerald-500" />

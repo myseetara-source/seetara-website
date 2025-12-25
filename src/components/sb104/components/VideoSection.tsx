@@ -7,17 +7,17 @@ export default function VideoSection() {
   const videoUrl = getVideoUrl();
 
   return (
-    <div className="px-4 py-4">
+    <div className="px-4 py-4 lg:py-6 lg:px-0">
        {/* Header */}
-       <div className="text-center mb-3">
-          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-100 to-teal-100 px-3 py-1.5 rounded-full shadow-sm border border-emerald-200">
-            <Play className="w-3.5 h-3.5 text-emerald-500 fill-current"/>
-            <span className="text-[11px] font-bold text-emerald-700">Real Product Video</span>
+       <div className="text-center mb-3 lg:mb-4">
+          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-100 to-teal-100 px-3 py-1.5 lg:px-4 lg:py-2 rounded-full shadow-sm border border-emerald-200">
+            <Play className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-emerald-500 fill-current"/>
+            <span className="text-[11px] lg:text-sm font-bold text-emerald-700">Real Product Video</span>
           </div>
        </div>
        
        {/* Video Container - 3:4 Ratio on mobile, 16:9 on desktop */}
-       <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border-4 border-white bg-black aspect-[3/4] max-w-[280px] mx-auto lg:max-w-lg lg:aspect-video">
+       <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border-4 border-white bg-black aspect-[3/4] max-w-[280px] mx-auto lg:max-w-xl lg:aspect-video">
           <video 
              src={videoUrl}
              className="w-full h-full object-cover"

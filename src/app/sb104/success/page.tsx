@@ -4,6 +4,13 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import SuccessMessage from '@/components/sb104/components/SuccessMessage';
 
+// Declare fbq for TypeScript - Facebook Pixel
+declare global {
+  interface Window {
+    fbq?: (action: string, event: string, params?: Record<string, unknown>) => void;
+  }
+}
+
 interface OrderData {
   orderType: string;
   formData: {
@@ -20,6 +27,7 @@ export default function SB104SuccessPage() {
   const router = useRouter();
   const [orderData, setOrderData] = useState<OrderData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [pixelFired, setPixelFired] = useState(false);
 
   useEffect(() => {
     // Get order data from sessionStorage
@@ -40,6 +48,24 @@ export default function SB104SuccessPage() {
     
     setIsLoading(false);
   }, [router]);
+
+  // Fire Facebook Pixel Purchase event when order data is loaded
+  useEffect(() => {
+    if (orderData && !pixelFired && orderData.orderType === 'buy') {
+      // Fire FB Pixel Purchase event
+      if (typeof window !== 'undefined' && window.fbq) {
+        window.fbq('track', 'Purchase', {
+          value: orderData.grandTotal,
+          currency: 'NPR',
+          content_name: `SB104 Multi-Functional Bag - ${orderData.productColor}`,
+          content_type: 'product',
+          content_ids: ['SB104'],
+        });
+        setPixelFired(true);
+        console.log('FB Pixel Purchase event fired for SB104:', orderData.grandTotal);
+      }
+    }
+  }, [orderData, pixelFired]);
 
   const handleReset = () => {
     // Clear stored order data

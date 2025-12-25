@@ -3,7 +3,6 @@
 import { useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import Script from 'next/script';
 import { CheckCircle, MessageCircle, Truck, Phone, Banknote } from 'lucide-react';
 
 // Declare fbq for TypeScript
@@ -168,23 +167,7 @@ Kripaya details dinuhola. Thank you!`;
 
   return (
     <>
-      {/* Facebook Pixel Purchase Event Script */}
-      <Script
-        id="fb-pixel-purchase"
-        strategy="afterInteractive"
-        dangerouslySetInnerHTML={{
-          __html: `
-            if (typeof fbq !== 'undefined' && '${orderType}' === 'buy') {
-              fbq('track', 'Purchase', {
-                value: ${parseFloat(grandTotal) || 0},
-                currency: 'NPR',
-                content_name: '${productName} - ${productColor}',
-                content_type: 'product'
-              });
-            }
-          `,
-        }}
-      />
+      {/* Facebook Pixel Purchase Event is fired via useEffect above - no duplicate Script needed */}
       
       <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-center overflow-hidden relative">
         <style jsx>{`

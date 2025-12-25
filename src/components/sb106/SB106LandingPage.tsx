@@ -203,6 +203,7 @@ export default function SB106LandingPage() {
         phone: formData.phone,
         name: formData.name,
         color: currentColor,
+        product: 'Seetara Chain Bag',
         total: grandTotal.toString(),
         address: formData.address,
         city: formData.city,

@@ -147,7 +147,7 @@ export default function Features({ stockLeft, viewers }: FeaturesProps) {
   }, []);
 
   return (
-    <div className="px-4 py-4 space-y-4">
+    <div className="px-4 py-4 space-y-4 lg:py-8 lg:space-y-6">
       
       {/* LIVE STATS BAR */}
       <div className={`relative rounded-2xl overflow-hidden shadow-xl transition-all duration-700 ${isStatsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>

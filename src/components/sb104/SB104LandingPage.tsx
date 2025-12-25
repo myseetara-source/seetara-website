@@ -307,40 +307,69 @@ export default function SB104LandingPage() {
         orderType={orderType}
       />
 
-      {/* Main Content */}
-      <main className="relative">
+      {/* Main Content - Centered container for desktop */}
+      <main className="relative max-w-md mx-auto lg:max-w-6xl lg:px-8">
         
-        {/* HERO SECTION */}
-        <section 
-          ref={heroRef}
-          id="hero-section"
-          className={`transition-all duration-700 ${
-            visibleSections.has('hero-section') 
-              ? 'opacity-100 translate-y-0' 
-              : 'opacity-0 translate-y-10'
-          }`}
-        >
-          <Hero 
-            selectedColorIndex={selectedColorIndex}
-            setSelectedColorIndex={setSelectedColorIndex}
-            showVideo={showVideo}
-            setShowVideo={setShowVideo}
-          />
+        {/* Desktop: Two Column Layout */}
+        <div className="lg:grid lg:grid-cols-2 lg:gap-8 lg:items-start">
           
-          {/* Animated Scroll Indicator */}
-          {showScrollHint && (
-            <div className="flex flex-col items-center justify-center py-4 animate-fade-in">
-              <p className="text-xs text-gray-400 mb-2 tracking-widest uppercase">Scroll to explore</p>
-              <div className="w-7 h-12 border-2 border-gray-300 rounded-full flex items-start justify-center p-1.5 relative">
-                <div className="w-2 h-3 bg-gradient-to-b from-emerald-500 to-teal-600 rounded-full animate-scroll-mouse"></div>
-              </div>
-              <div className="flex flex-col items-center mt-1">
-                <ChevronDown className="w-4 h-4 text-gray-400 animate-bounce" style={{ animationDelay: '0s' }} />
-                <ChevronDown className="w-4 h-4 text-gray-300 -mt-2 animate-bounce" style={{ animationDelay: '0.1s' }} />
-              </div>
-            </div>
-          )}
-        </section>
+          {/* Left Column - Hero (Product) */}
+          <div className="lg:sticky lg:top-20">
+            {/* HERO SECTION */}
+            <section 
+              ref={heroRef}
+              id="hero-section"
+              className={`transition-all duration-700 ${
+                visibleSections.has('hero-section') 
+                  ? 'opacity-100 translate-y-0' 
+                  : 'opacity-0 translate-y-10'
+              }`}
+            >
+              <Hero 
+                selectedColorIndex={selectedColorIndex}
+                setSelectedColorIndex={setSelectedColorIndex}
+                showVideo={showVideo}
+                setShowVideo={setShowVideo}
+              />
+              
+              {/* Animated Scroll Indicator - Hide on desktop */}
+              {showScrollHint && (
+                <div className="flex flex-col items-center justify-center py-4 animate-fade-in lg:hidden">
+                  <p className="text-xs text-gray-400 mb-2 tracking-widest uppercase">Scroll to explore</p>
+                  <div className="w-7 h-12 border-2 border-gray-300 rounded-full flex items-start justify-center p-1.5 relative">
+                    <div className="w-2 h-3 bg-gradient-to-b from-emerald-500 to-teal-600 rounded-full animate-scroll-mouse"></div>
+                  </div>
+                  <div className="flex flex-col items-center mt-1">
+                    <ChevronDown className="w-4 h-4 text-gray-400 animate-bounce" style={{ animationDelay: '0s' }} />
+                    <ChevronDown className="w-4 h-4 text-gray-300 -mt-2 animate-bounce" style={{ animationDelay: '0.1s' }} />
+                  </div>
+                </div>
+              )}
+            </section>
+          </div>
+
+          {/* Right Column - Order Form (Desktop) */}
+          <div className="hidden lg:block">
+            <section 
+              id="form-section-desktop"
+              className="transition-all duration-700 opacity-100"
+            >
+              <OrderForm
+                orderType={orderType}
+                setOrderType={setOrderType}
+                formData={formData}
+                handleInputChange={handleInputChange}
+                deliveryLocation={deliveryLocation}
+                setDeliveryLocation={setDeliveryLocation}
+                currentProduct={currentProduct}
+                deliveryCharge={deliveryCharge}
+                grandTotal={grandTotal}
+                handleSubmit={handleSubmit}
+                isSubmitting={isSubmitting}
+              />
+            </section>
+          </div>
+        </div>
 
         {/* FEATURES SECTION */}
         <section 
@@ -368,11 +397,11 @@ export default function SB104LandingPage() {
           <VideoSection />
         </section>
 
-        {/* ORDER FORM SECTION */}
+        {/* ORDER FORM SECTION - Mobile Only */}
         <section 
           ref={formRef}
           id="form-section"
-          className={`transition-all duration-700 delay-300 ${
+          className={`lg:hidden transition-all duration-700 delay-300 ${
             visibleSections.has('form-section') 
               ? 'opacity-100 translate-y-0' 
               : 'opacity-0 translate-y-10'
@@ -394,20 +423,22 @@ export default function SB104LandingPage() {
         </section>
 
         {/* Bottom Spacing for Fixed Bar */}
-        {!isFormVisible && <div className="h-20 md:hidden"></div>}
+        {!isFormVisible && <div className="h-20 lg:hidden"></div>}
       </main>
 
-      {/* Fixed Bottom Bar - HIDE when form is visible */}
+      {/* Fixed Bottom Bar - HIDE when form is visible, HIDE on desktop */}
       {!isFormVisible && (
-        <BottomBar 
-          orderType={orderType}
-          currentProduct={currentProduct}
-          grandTotal={grandTotal}
-          handleSubmit={handleSubmit}
-          scrollToOrder={scrollToOrder}
-          formData={formData}
-          isSubmitting={isSubmitting}
-        />
+        <div className="lg:hidden">
+          <BottomBar 
+            orderType={orderType}
+            currentProduct={currentProduct}
+            grandTotal={grandTotal}
+            handleSubmit={handleSubmit}
+            scrollToOrder={scrollToOrder}
+            formData={formData}
+            isSubmitting={isSubmitting}
+          />
+        </div>
       )}
     </div>
   );

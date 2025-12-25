@@ -78,11 +78,11 @@ export default function Hero({
   };
 
   return (
-    <div className="px-4 pt-2 pb-3 overflow-hidden md:px-0"> 
+    <div className="px-4 pt-2 pb-3 overflow-hidden lg:px-0 lg:pt-4"> 
       
       {/* Product Title */}
-      <div className="text-center mb-3">
-        <h1 className="text-xl font-black text-gray-900 leading-tight">
+      <div className="text-center mb-3 lg:mb-4">
+        <h1 className="text-xl lg:text-3xl font-black text-gray-900 leading-tight">
           Seetara <span className="bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-600 bg-clip-text text-transparent">Multi-Functional</span> Bag
         </h1>
       </div>
@@ -202,8 +202,8 @@ export default function Hero({
         </p>
       </div>
 
-      {/* Price & CTA Section */}
-      <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 rounded-2xl p-4 border border-emerald-200 shadow-lg">
+      {/* Price & CTA Section - Hide on desktop (form is visible on right) */}
+      <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 rounded-2xl p-4 border border-emerald-200 shadow-lg lg:hidden">
         {/* Price Display */}
         <div className="flex items-center justify-center gap-3 mb-2">
           <div className="text-center">

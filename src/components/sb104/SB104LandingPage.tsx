@@ -257,19 +257,18 @@ export default function SB104LandingPage() {
       setShowProcessing(false);
       
       // Build success URL with query params for /order-success page (FB Pixel Purchase event)
-      const successParams = new URLSearchParams({
-        type: orderType,
-        name: formData.name,
-        phone: formData.phone,
-        color: currentColor,
-        product: 'Multi-Functional Bag',
-        ...(orderType === 'buy' && {
-          total: grandTotal.toString(),
-          address: formData.address,
-          city: formData.city,
-          delivery: deliveryLocation
-        })
-      });
+      const successParams = new URLSearchParams();
+      successParams.set('type', orderType);
+      successParams.set('name', formData.name);
+      successParams.set('phone', formData.phone);
+      successParams.set('color', currentColor);
+      successParams.set('product', 'Multi-Functional Bag');
+      if (orderType === 'buy') {
+        successParams.set('total', grandTotal.toString());
+        successParams.set('address', formData.address);
+        successParams.set('city', formData.city);
+        successParams.set('delivery', deliveryLocation || '');
+      }
       router.push(`/order-success?${successParams.toString()}`);
       
     } catch (error) {
@@ -277,19 +276,18 @@ export default function SB104LandingPage() {
       setShowProcessing(false);
       
       // Still redirect to success page on error (order was likely submitted)
-      const successParams = new URLSearchParams({
-        type: orderType,
-        name: formData.name,
-        phone: formData.phone,
-        color: currentColor,
-        product: 'Multi-Functional Bag',
-        ...(orderType === 'buy' && {
-          total: grandTotal.toString(),
-          address: formData.address,
-          city: formData.city,
-          delivery: deliveryLocation
-        })
-      });
+      const successParams = new URLSearchParams();
+      successParams.set('type', orderType);
+      successParams.set('name', formData.name);
+      successParams.set('phone', formData.phone);
+      successParams.set('color', currentColor);
+      successParams.set('product', 'Multi-Functional Bag');
+      if (orderType === 'buy') {
+        successParams.set('total', grandTotal.toString());
+        successParams.set('address', formData.address);
+        successParams.set('city', formData.city);
+        successParams.set('delivery', deliveryLocation || '');
+      }
       router.push(`/order-success?${successParams.toString()}`);
     } finally {
       setIsSubmitting(false);

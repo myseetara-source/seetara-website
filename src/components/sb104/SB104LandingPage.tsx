@@ -308,7 +308,7 @@ export default function SB104LandingPage() {
       />
 
       {/* Main Content - Centered container for desktop */}
-      <main className="relative max-w-md mx-auto lg:max-w-6xl lg:px-8">
+      <main className="relative max-w-md mx-auto lg:max-w-4xl xl:max-w-5xl lg:px-6">
         
         {/* Desktop: Two Column Layout */}
         <div className="lg:grid lg:grid-cols-2 lg:gap-8 lg:items-start">

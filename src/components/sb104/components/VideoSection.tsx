@@ -16,8 +16,8 @@ export default function VideoSection() {
           </div>
        </div>
        
-       {/* Video Container - 3:4 Ratio */}
-       <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border-4 border-white bg-black aspect-[3/4] max-w-[280px] mx-auto">
+       {/* Video Container - 3:4 Ratio on mobile, 16:9 on desktop */}
+       <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl border-4 border-white bg-black aspect-[3/4] max-w-[280px] mx-auto lg:max-w-lg lg:aspect-video">
           <video 
              src={videoUrl}
              className="w-full h-full object-cover"

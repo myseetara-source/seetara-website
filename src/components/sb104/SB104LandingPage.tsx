@@ -86,22 +86,32 @@ export default function SB104LandingPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Check if form is visible
+  // Check if Confirm Order button is visible - hide bottom bar when it's on screen
   useEffect(() => {
-    const formElement = document.getElementById('order-form');
-    if (!formElement) return;
+    const checkButtonVisibility = () => {
+      const confirmBtn = document.getElementById('confirm-order-btn');
+      if (!confirmBtn) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach(entry => {
-          setIsFormVisible(entry.isIntersecting);
-        });
-      },
-      { threshold: 0.3 }
-    );
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach(entry => {
+            setIsFormVisible(entry.isIntersecting);
+          });
+        },
+        { threshold: 0.1 } // Hide bottom bar when even 10% of the button area is visible
+      );
 
-    observer.observe(formElement);
-    return () => observer.disconnect();
+      observer.observe(confirmBtn);
+      return observer;
+    };
+
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      const observer = checkButtonVisibility();
+      return () => observer?.disconnect();
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, []);
 
   // Intersection Observer for scroll animations

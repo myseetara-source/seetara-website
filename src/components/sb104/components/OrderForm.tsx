@@ -233,7 +233,7 @@ export default function OrderForm({
         </div>
 
         {/* Submit Button */}
-        <div className="p-4 pt-2">
+        <div id="confirm-order-btn" className="p-4 pt-2">
           <button
             type="submit"
             disabled={isSubmitting}

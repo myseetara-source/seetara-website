@@ -88,30 +88,37 @@ export default function SB104LandingPage() {
 
   // Check if Confirm Order button is visible - hide bottom bar when it's on screen
   useEffect(() => {
-    const checkButtonVisibility = () => {
-      const confirmBtn = document.getElementById('confirm-order-btn');
-      if (!confirmBtn) return;
+    let observer: IntersectionObserver | null = null;
 
-      const observer = new IntersectionObserver(
+    const setupObserver = () => {
+      const confirmBtn = document.getElementById('confirm-order-btn');
+      if (!confirmBtn) {
+        // If button not found, try again shortly
+        setTimeout(setupObserver, 200);
+        return;
+      }
+
+      observer = new IntersectionObserver(
         (entries) => {
           entries.forEach(entry => {
             setIsFormVisible(entry.isIntersecting);
           });
         },
-        { threshold: 0.1 } // Hide bottom bar when even 10% of the button area is visible
+        { threshold: 0 } // Hide bottom bar as soon as button enters viewport
       );
 
       observer.observe(confirmBtn);
-      return observer;
     };
 
     // Small delay to ensure DOM is ready
-    const timer = setTimeout(() => {
-      const observer = checkButtonVisibility();
-      return () => observer?.disconnect();
-    }, 100);
+    const timer = setTimeout(setupObserver, 100);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      if (observer) {
+        observer.disconnect();
+      }
+    };
   }, []);
 
   // Intersection Observer for scroll animations

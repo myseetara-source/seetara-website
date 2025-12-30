@@ -1,6 +1,19 @@
 'use client';
 
-import { CheckCircle, MessageCircle, Phone, Briefcase, Sparkles } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { CheckCircle, MessageCircle, Phone, Sparkles, Smartphone } from 'lucide-react';
+
+// Declare fbq for TypeScript
+declare global {
+  interface Window {
+    fbq?: (
+      action: string, 
+      event: string, 
+      params?: Record<string, unknown>,
+      options?: { eventID?: string }
+    ) => void;
+  }
+}
 
 interface SuccessMessageProps {
   orderType: string;
@@ -13,8 +26,10 @@ interface SuccessMessageProps {
   onReset: () => void;
   productColor?: string;
   grandTotal?: number;
+  orderId?: string;
 }
 
+// Function to open WhatsApp
 const openWhatsApp = (formData: SuccessMessageProps['formData'], orderType: string, productColor?: string, grandTotal?: number) => {
   const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '9779802359033';
   
@@ -28,7 +43,7 @@ const openWhatsApp = (formData: SuccessMessageProps['formData'], orderType: stri
 *मेरो अर्डर:*
 • *नाम:* ${formData.name}
 • *Phone:* ${formData.phone}
-• *Product:* Multi-Functional Bag
+• *Product:* Seetara Smart Wallet
 • *Color:* ${productColor || 'N/A'}
 • *ठेगाना:* ${formData.address}, ${formData.city}
 • *Total:* रु. ${grandTotal || 'N/A'}
@@ -37,7 +52,7 @@ const openWhatsApp = (formData: SuccessMessageProps['formData'], orderType: stri
   } else {
     message = `नमस्ते Seetara Team 🙏
 
-मैले Website मा *Multi-Functional Bag* देखें। मलाई यो Product बारेमा केहि जान्न थियो।
+मैले Website मा *${productColor || 'Smart Wallet'}* देखें। मलाई यो Product बारेमा केहि जान्न थियो।
 
 *मेरो Details:*
 • *नाम:* ${formData.name}
@@ -80,13 +95,38 @@ const openWhatsApp = (formData: SuccessMessageProps['formData'], orderType: stri
   }
 };
 
-export default function SuccessMessage({ orderType, formData, onReset, productColor, grandTotal }: SuccessMessageProps) {
+export default function SuccessMessage({ orderType, formData, onReset, productColor, grandTotal, orderId }: SuccessMessageProps) {
+  const hasFiredPixel = useRef(false);
+
+  // Fire Facebook Pixel Purchase event ONCE with event_id for deduplication
+  useEffect(() => {
+    if (hasFiredPixel.current || orderType !== 'buy') return;
+    
+    if (typeof window !== 'undefined' && window.fbq) {
+      // Generate unique order ID
+      const uniqueOrderId = orderId || `sw101_${formData.phone}_${Date.now()}`;
+      // Event ID = Order ID (SIMPLE! Must match Google Sheets script exactly!)
+      const eventId = uniqueOrderId;
+      
+      window.fbq('track', 'Purchase', {
+        value: grandTotal || 0,
+        currency: 'NPR',
+        content_name: `Seetara Smart Wallet - ${productColor || 'Unknown'}`,
+        content_type: 'product',
+        order_id: uniqueOrderId,
+      }, { eventID: eventId });
+      
+      hasFiredPixel.current = true;
+      console.log('FB Pixel Purchase fired (SW101) with eventID:', eventId);
+    }
+  }, [orderType, grandTotal, productColor, formData.phone, orderId]);
+
   const handleWhatsAppClick = () => {
     openWhatsApp(formData, orderType, productColor, grandTotal);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50 to-white flex flex-col items-center justify-center p-6 text-center overflow-hidden relative">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white flex flex-col items-center justify-center p-6 text-center overflow-hidden relative">
       <style jsx>{`
         @keyframes confetti-fall { 0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
         .confetti { position: absolute; width: 10px; height: 10px; animation: confetti-fall 3s linear infinite; }
@@ -102,53 +142,60 @@ export default function SuccessMessage({ orderType, formData, onReset, productCo
           style={{ 
             left: `${Math.random() * 100}vw`, 
             animationDelay: `${Math.random() * 2}s`, 
-            backgroundColor: ['#10B981', '#14B8A6', '#F59E0B', '#3B82F6', '#8B5CF6'][Math.floor(Math.random() * 5)] 
+            backgroundColor: ['#F59E0B', '#EF4444', '#8B5CF6', '#10B981', '#EC4899'][Math.floor(Math.random() * 5)] 
           }}
         />
       ))}
       
-      <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm border border-emerald-100 animate-pop-in relative">
-        <Sparkles className="absolute top-3 right-3 w-5 h-5 text-yellow-400 animate-pulse" />
-        <Sparkles className="absolute top-3 left-3 w-5 h-5 text-yellow-400 animate-pulse" />
+      <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm border border-amber-100 animate-pop-in relative">
+        {/* Sparkles */}
+        <Sparkles className="absolute top-3 right-3 w-5 h-5 text-amber-400 animate-pulse" />
+        <Sparkles className="absolute top-3 left-3 w-5 h-5 text-amber-400 animate-pulse" />
         
-        <div className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-5 shadow-lg animate-bounce">
+        {/* Success Icon */}
+        <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-5 shadow-lg animate-bounce">
           <CheckCircle className="w-10 h-10 text-white" />
         </div>
         
+        {/* Success Message */}
         <h2 className="text-xl font-black text-gray-900 mb-1.5">
           {orderType === 'buy' ? '🎉 अर्डर सफल भयो!' : '📨 Message पठाइयो!'}
         </h2>
         <p className="text-gray-600 mb-5 text-sm">
           {orderType === 'buy' 
-              ? 'बधाई छ! तपाईंको Work Bag अर्डर Confirm भयो। हाम्रो Team ले छिट्टै Call गर्नेछ!' 
+              ? 'बधाई छ! तपाईंको Smart Wallet अर्डर Confirm भयो। हाम्रो Team ले छिट्टै Call गर्नेछ!' 
               : 'धन्यवाद! तपाईंको Message पाएँ। हाम्रो Team ले छिट्टै Contact गर्नेछ!'}
         </p>
         
-        <div className="bg-gradient-to-r from-emerald-50 to-teal-50 p-3 rounded-xl border border-emerald-100 mb-4">
+        {/* Phone Display */}
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-3 rounded-xl border border-amber-100 mb-4">
            <div className="flex items-center justify-center gap-1.5 mb-0.5">
-             <Phone className="w-3.5 h-3.5 text-emerald-600" />
-             <p className="text-[10px] text-emerald-600 font-bold">Confirmation SMS पठाइएको:</p>
+             <Phone className="w-3.5 h-3.5 text-amber-600" />
+             <p className="text-[10px] text-amber-600 font-bold">Confirmation SMS पठाइएको:</p>
            </div>
            <p className="font-black text-lg text-gray-800">{formData.phone}</p>
         </div>
         
+        {/* Smart Wallet Notice */}
         {orderType === 'buy' && (
-          <div className="bg-amber-50 p-2.5 rounded-lg border border-amber-200 mb-4 flex items-center gap-2">
-            <Briefcase className="w-4 h-4 text-amber-600 shrink-0" />
-            <p className="text-[11px] text-amber-700 font-medium text-left">
-              💼 Premium Work Bag छिट्टै आइपुग्छ!
+          <div className="bg-purple-50 p-2.5 rounded-lg border border-purple-200 mb-4 flex items-center gap-2">
+            <Smartphone className="w-4 h-4 text-purple-600 shrink-0" />
+            <p className="text-[11px] text-purple-700 font-medium text-left">
+              📱 Smart Pull-Tab Wallet छिट्टै आउँछ!
             </p>
           </div>
         )}
         
+        {/* WhatsApp Button */}
         <button 
           onClick={handleWhatsAppClick}
-          className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white py-3.5 rounded-xl font-bold shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 mb-2.5 text-sm"
+          className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white py-3.5 rounded-xl font-bold shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 mb-2.5 text-sm"
         >
           <MessageCircle className="w-4 h-4" />
           WhatsApp मा कुरा गर्नुहोस् 💬
         </button>
         
+        {/* Back Button */}
         <button 
           onClick={onReset} 
           className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-bold transition-all text-sm"
@@ -156,6 +203,7 @@ export default function SuccessMessage({ orderType, formData, onReset, productCo
           ← फेरि Shopping गर्नुहोस्
         </button>
         
+        {/* Trust Footer */}
         <p className="text-[10px] text-gray-400 mt-3">
           🔒 तपाईंको पैसा सुरक्षित छ • Cash on Delivery
         </p>

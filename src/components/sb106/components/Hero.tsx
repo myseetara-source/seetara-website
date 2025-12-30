@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Play, X, Star, Check, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Play, X, Star, Check } from 'lucide-react';
 import { productColors, products } from '../utils/constants';
 import { getVideoUrl } from '../config/r2Config';
 import Image from 'next/image';
@@ -19,57 +19,48 @@ export default function Hero({
   showVideo, 
   setShowVideo 
 }: HeroProps) {
-  const [slideDirection, setSlideDirection] = useState('right'); 
   const [isAnimating, setIsAnimating] = useState(false);
-  const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
 
   const currentColor = productColors[selectedColorIndex];
   const currentProduct = products[currentColor];
   const videoUrl = getVideoUrl();
 
-  // Preload ALL product images on mount for instant color switching
+  // Preload ALL product images on mount for instant switching
   useEffect(() => {
-    const preloadAllImages = () => {
-      productColors.forEach((color) => {
-        const img = new window.Image();
-        img.src = products[color].image;
-      });
-    };
-    
-    preloadAllImages();
-  }, []); // Only run once on mount
+    productColors.forEach((color) => {
+      const img = new window.Image();
+      img.src = products[color].image;
+    });
+  }, []);
 
+  // Reset error state on color change
   useEffect(() => {
-    setImageLoading(true);
     setImageError(false);
   }, [selectedColorIndex]);
 
   const handleNext = () => {
     if (isAnimating) return;
     setIsAnimating(true);
-    setSlideDirection('right');
     setSelectedColorIndex((selectedColorIndex + 1) % productColors.length);
     setShowVideo(false); 
-    setTimeout(() => setIsAnimating(false), 300);
+    setTimeout(() => setIsAnimating(false), 150);
   };
 
   const handlePrev = () => {
     if (isAnimating) return;
     setIsAnimating(true);
-    setSlideDirection('left');
     setSelectedColorIndex((selectedColorIndex - 1 + productColors.length) % productColors.length);
     setShowVideo(false);
-    setTimeout(() => setIsAnimating(false), 300);
+    setTimeout(() => setIsAnimating(false), 150);
   };
 
   const handleColorSelect = (index: number) => {
     if (index === selectedColorIndex) return;
-    setSlideDirection(index > selectedColorIndex ? 'right' : 'left');
     setIsAnimating(true);
     setSelectedColorIndex(index);
     setShowVideo(false);
-    setTimeout(() => setIsAnimating(false), 300);
+    setTimeout(() => setIsAnimating(false), 150);
   };
 
   return (
@@ -99,7 +90,7 @@ export default function Hero({
            <Star className="w-3 h-3 fill-current" /> BEST SELLER
         </div>
 
-        <div className={`w-full h-full transition-all duration-300 ${isAnimating ? 'opacity-50 scale-95' : 'opacity-100 scale-100'}`}>
+        <div className={`w-full h-full transition-all duration-150 ${isAnimating ? 'opacity-70 scale-[0.98]' : 'opacity-100 scale-100'}`}>
            {showVideo ? (
               <div className="w-full h-full bg-black relative">
                  <video 
@@ -122,35 +113,38 @@ export default function Hero({
               </div>
            ) : (
               <div className="w-full h-full animate-float group-hover:scale-110 transition-transform duration-700 ease-in-out relative">
-                {imageLoading && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">
-                    <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
-                  </div>
-                )}
                 {imageError ? (
                   <div className="w-full h-full flex items-center justify-center bg-gray-100 p-8">
                     <div className="text-center">
-                      <p className="text-gray-400 text-sm mb-2">Image load huna sakyo</p>
-                      <p className="text-gray-500 text-xs">{currentColor} Handbag</p>
+                      <Star className="w-16 h-16 text-amber-300 mx-auto mb-3" />
+                      <p className="text-gray-600 text-sm font-bold mb-1">Premium Handbag</p>
+                      <p className="text-gray-500 text-xs">{currentColor}</p>
                     </div>
                   </div>
                 ) : (
-                  <Image
-                    key={selectedColorIndex} 
-                    src={currentProduct.image} 
-                    alt={`Seetara ${currentColor} Handbag - Premium Quality Bag`}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    className={`object-contain p-2 ${slideDirection === 'right' ? 'slide-right' : 'slide-left'} ${imageLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
-                    priority
-                    loading="eager"
-                    quality={90}
-                    onLoad={() => setImageLoading(false)}
-                    onError={() => {
-                      setImageLoading(false);
-                      setImageError(true);
-                    }}
-                  />
+                  <>
+                    {/* Render ALL images but only show current one - instant switching */}
+                    {productColors.map((color, index) => (
+                      <Image
+                        key={color}
+                        src={products[color].image}
+                        alt={`Seetara ${color} Handbag - Premium Quality Bag`}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        className={`object-contain p-2 transition-opacity duration-100 ${
+                          index === selectedColorIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                        }`}
+                        priority
+                        loading="eager"
+                        quality={90}
+                        onError={() => {
+                          if (index === selectedColorIndex) {
+                            setImageError(true);
+                          }
+                        }}
+                      />
+                    ))}
+                  </>
                 )}
               </div>
            )}

@@ -1,0 +1,458 @@
+/**
+ * Seetara Meta Conversions API - Google Sheets Integration
+ * 
+ * This script sends server-side events to Meta Conversions API
+ * to fix duplicate events and improve ad algorithm.
+ * 
+ * SETUP:
+ * 1. Update PIXEL_ID and ACCESS_TOKEN below
+ * 2. Set up time-based triggers in Apps Script
+ * 3. Monitor in Meta Events Manager
+ */
+
+// ============================================
+// CONFIGURATION - UPDATE THESE VALUES
+// ============================================
+const CONFIG = {
+  PIXEL_ID: '2046274132882959',
+  ACCESS_TOKEN: 'EAAbVARQRUmQBQd3pnOyZCKf68TlMzNfmwK7l5GZARQoRQ27bEBZBbj2R2aTsFe34JkSDtJ9PUkTm9ZBUzdMNOEb3vqb9P3r2sJwXdXmFQXFfqY5ar9ZAiAoKsmBWsRETqbuffwSZBDomoYaxfX47hSSi26g9xpQ9wnsZBhF0V5vxxBmmDwd2ZAbUAnakRelG6DpQPQZDZD',
+  API_VERSION: 'v24.0',
+  TEST_EVENT_CODE: '', // Leave empty for production, add code for testing
+};
+
+// Sheet configuration
+const SHEETS = {
+  ORDERS: 'Orders',
+  SENT_EVENTS: 'Sent Events',
+};
+
+// Column indices (0-based)
+const COLUMNS = {
+  ORDER_ID: 0,      // A
+  TIMESTAMP: 1,     // B
+  CUSTOMER_NAME: 2, // C
+  PHONE: 3,         // D
+  PRODUCT: 4,       // E
+  COLOR: 5,         // F
+  PRICE: 6,         // G
+  STATUS: 7,        // H
+  CITY: 8,          // I
+  SENT_TO_META: 9,  // J
+  EVENT_ID: 10,     // K
+};
+
+// ============================================
+// MAIN FUNCTIONS
+// ============================================
+
+/**
+ * Send Purchase events for Converted orders
+ * Run this every 5 minutes via trigger
+ * 
+ * Status Flow:
+ * - Intake: नयाँ order आयो (don't send Purchase yet)
+ * - Converted: Order successful भयो (SEND PURCHASE EVENT!)
+ * - Cancelled: Order cancel भयो (send negative signal)
+ */
+function sendNewPurchaseEvents() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.ORDERS);
+  const data = sheet.getDataRange().getValues();
+  
+  let eventsSent = 0;
+  
+  // Skip header row
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    const orderId = row[COLUMNS.ORDER_ID];
+    const sentToMeta = row[COLUMNS.SENT_TO_META];
+    const status = String(row[COLUMNS.STATUS]).trim().toLowerCase();
+    
+    // Skip if already sent or no order ID
+    if (!orderId || sentToMeta === 'YES') continue;
+    
+    // Only send Purchase event when status is "Converted" (order successful)
+    if (status === 'converted') {
+      const success = sendPurchaseEvent(row, i + 1);
+      if (success) {
+        eventsSent++;
+        // Mark as sent
+        sheet.getRange(i + 1, COLUMNS.SENT_TO_META + 1).setValue('YES');
+        // Add event ID
+        const eventId = generateEventId(orderId);
+        sheet.getRange(i + 1, COLUMNS.EVENT_ID + 1).setValue(eventId);
+      }
+    }
+  }
+  
+  Logger.log(`Sent ${eventsSent} Purchase events to Meta`);
+}
+
+/**
+ * Send Cancelled events to Meta
+ * Run this every 5 minutes via trigger
+ * 
+ * This sends negative signal to Meta when order is cancelled
+ * so algorithm learns which leads are bad quality
+ */
+function sendStatusUpdateEvents() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.ORDERS);
+  const sentEventsSheet = getOrCreateSentEventsSheet();
+  const data = sheet.getDataRange().getValues();
+  
+  let eventsSent = 0;
+  
+  // Skip header row
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    const orderId = row[COLUMNS.ORDER_ID];
+    const status = String(row[COLUMNS.STATUS]).trim().toLowerCase();
+    
+    if (!orderId) continue;
+    
+    // Check if we already sent this status update
+    const statusEventKey = `${orderId}_${status}`;
+    if (isEventAlreadySent(sentEventsSheet, statusEventKey)) continue;
+    
+    let success = false;
+    
+    // Only send event for Cancelled orders (negative signal to Meta)
+    if (status === 'cancelled') {
+      success = sendCancelledEvent(row, i + 1);
+    }
+    
+    if (success) {
+      eventsSent++;
+      markEventAsSent(sentEventsSheet, statusEventKey, status);
+    }
+  }
+  
+  Logger.log(`Sent ${eventsSent} Cancelled events to Meta`);
+}
+
+// ============================================
+// EVENT SENDING FUNCTIONS
+// ============================================
+
+/**
+ * Send Purchase event to Meta
+ */
+function sendPurchaseEvent(row, rowNumber) {
+  const orderId = row[COLUMNS.ORDER_ID];
+  const timestamp = row[COLUMNS.TIMESTAMP];
+  const phone = row[COLUMNS.PHONE];
+  const price = row[COLUMNS.PRICE];
+  const product = row[COLUMNS.PRODUCT];
+  const city = row[COLUMNS.CITY];
+  
+  const eventId = generateEventId(orderId);
+  const eventTime = getUnixTimestamp(timestamp);
+  
+  const payload = {
+    data: [{
+      event_name: 'Purchase',
+      event_time: eventTime,
+      event_id: eventId, // IMPORTANT: For deduplication
+      action_source: 'website',
+      user_data: {
+        ph: [hashPhone(phone)],
+        ct: [hashString(city?.toLowerCase() || 'kathmandu')],
+        country: [hashString('np')],
+      },
+      custom_data: {
+        currency: 'NPR',
+        value: parseFloat(price) || 0,
+        content_name: product,
+        content_type: 'product',
+        order_id: String(orderId),
+      },
+    }],
+  };
+  
+  if (CONFIG.TEST_EVENT_CODE) {
+    payload.test_event_code = CONFIG.TEST_EVENT_CODE;
+  }
+  
+  return sendToMeta(payload);
+}
+
+/**
+ * Send Cancelled/Refund event to Meta
+ * For E-commerce, "Refund" is better than "Lead"
+ * 
+ * This tells Facebook:
+ * - This purchase was cancelled/refunded
+ * - Helps calculate accurate ROAS
+ * - Algorithm learns which leads cancel
+ */
+function sendCancelledEvent(row, rowNumber) {
+  const orderId = row[COLUMNS.ORDER_ID];
+  const phone = row[COLUMNS.PHONE];
+  const price = row[COLUMNS.PRICE];
+  
+  // Use consistent event ID format (no Date.now!)
+  const eventId = `refund_${orderId}`;
+  const eventTime = Math.floor(Date.now() / 1000);
+  
+  const payload = {
+    data: [{
+      event_name: 'Refund', // Better for E-commerce than Lead
+      event_time: eventTime,
+      event_id: eventId,
+      action_source: 'system_generated',
+      user_data: {
+        ph: [hashPhone(phone)],
+        country: [hashString('np')],
+      },
+      custom_data: {
+        currency: 'NPR',
+        value: parseFloat(price) || 0, // Negative value signals refund
+        order_id: String(orderId),
+        refund_reason: 'order_cancelled',
+      },
+    }],
+  };
+  
+  if (CONFIG.TEST_EVENT_CODE) {
+    payload.test_event_code = CONFIG.TEST_EVENT_CODE;
+  }
+  
+  return sendToMeta(payload);
+}
+
+// ============================================
+// API COMMUNICATION
+// ============================================
+
+/**
+ * Send payload to Meta Conversions API
+ */
+function sendToMeta(payload) {
+  const url = `https://graph.facebook.com/${CONFIG.API_VERSION}/${CONFIG.PIXEL_ID}/events?access_token=${CONFIG.ACCESS_TOKEN}`;
+  
+  const options = {
+    method: 'post',
+    contentType: 'application/json',
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true,
+  };
+  
+  try {
+    const response = UrlFetchApp.fetch(url, options);
+    const responseCode = response.getResponseCode();
+    const responseBody = JSON.parse(response.getContentText());
+    
+    if (responseCode === 200) {
+      Logger.log(`✅ Event sent successfully: ${JSON.stringify(responseBody)}`);
+      return true;
+    } else {
+      Logger.log(`❌ Error sending event: ${JSON.stringify(responseBody)}`);
+      return false;
+    }
+  } catch (error) {
+    Logger.log(`❌ Exception: ${error.message}`);
+    return false;
+  }
+}
+
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
+
+/**
+ * Generate event ID for deduplication
+ * IMPORTANT: Must match EXACTLY with website's event ID!
+ * 
+ * SIMPLE IS BEST: Just use orderId directly
+ * Website र Sheet दुवैमा यही format use गर्नुहोस्
+ */
+function generateEventId(orderId) {
+  // Just orderId - simple and consistent!
+  // Example: "ORD1001" or "sb107_9841234567_1735567890"
+  return String(orderId);
+}
+
+/**
+ * Convert date to Unix timestamp
+ */
+function getUnixTimestamp(dateValue) {
+  if (!dateValue) return Math.floor(Date.now() / 1000);
+  
+  try {
+    const date = new Date(dateValue);
+    return Math.floor(date.getTime() / 1000);
+  } catch (e) {
+    return Math.floor(Date.now() / 1000);
+  }
+}
+
+/**
+ * Hash phone number with SHA256
+ * Facebook requires phone WITH country code: 9779XXXXXXXXX
+ * DO NOT remove 977!
+ */
+function hashPhone(phone) {
+  if (!phone) return '';
+  
+  // Clean phone number (remove +, -, spaces)
+  let cleaned = String(phone).replace(/\D/g, '');
+  
+  // Remove leading 0 if present
+  if (cleaned.startsWith('0')) {
+    cleaned = cleaned.substring(1);
+  }
+  
+  // Add Nepal country code if not present
+  // Facebook requires: 9779XXXXXXXXX format
+  if (!cleaned.startsWith('977') && cleaned.length === 10) {
+    cleaned = '977' + cleaned;
+  }
+  
+  // Final format should be 9779XXXXXXXXX (13 digits)
+  return hashString(cleaned);
+}
+
+/**
+ * Hash string with SHA256
+ */
+function hashString(value) {
+  if (!value) return '';
+  
+  const hash = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, value.toLowerCase().trim());
+  return hash.map(b => ('0' + (b & 0xFF).toString(16)).slice(-2)).join('');
+}
+
+/**
+ * Get or create the Sent Events sheet
+ */
+function getOrCreateSentEventsSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(SHEETS.SENT_EVENTS);
+  
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEETS.SENT_EVENTS);
+    sheet.getRange(1, 1, 1, 3).setValues([['Event Key', 'Event Type', 'Sent At']]);
+  }
+  
+  return sheet;
+}
+
+/**
+ * Check if event was already sent
+ */
+function isEventAlreadySent(sheet, eventKey) {
+  const data = sheet.getDataRange().getValues();
+  
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === eventKey) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+/**
+ * Mark event as sent
+ */
+function markEventAsSent(sheet, eventKey, eventType) {
+  sheet.appendRow([eventKey, eventType, new Date()]);
+}
+
+// ============================================
+// MANUAL TEST FUNCTIONS
+// ============================================
+
+/**
+ * Test the connection to Meta API
+ * Run this manually to verify setup
+ */
+function testConnection() {
+  const payload = {
+    data: [{
+      event_name: 'PageView',
+      event_time: Math.floor(Date.now() / 1000),
+      event_id: `test_${Date.now()}`,
+      action_source: 'website',
+      user_data: {
+        client_ip_address: '0.0.0.0',
+        client_user_agent: 'Mozilla/5.0',
+      },
+    }],
+    test_event_code: 'TEST12345', // Replace with your test code from Events Manager
+  };
+  
+  const success = sendToMeta(payload);
+  
+  if (success) {
+    Logger.log('✅ Connection test successful! Check Events Manager > Test Events');
+  } else {
+    Logger.log('❌ Connection test failed. Check your Access Token and Pixel ID.');
+  }
+}
+
+/**
+ * Process all orders manually (one-time)
+ * Use this to catch up on orders
+ */
+function processAllOrders() {
+  sendNewPurchaseEvents();
+  sendStatusUpdateEvents();
+  Logger.log('All orders processed!');
+}
+
+// ============================================
+// IMPORT FROM EXTERNAL SHEET (Optional)
+// ============================================
+
+/**
+ * Import orders from your existing Google Sheet
+ * Update the IMPORT_SHEET_URL below
+ */
+function importFromExternalSheet() {
+  const IMPORT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1iV2Ckvm5wuB-1kT1uWXOe0rNuDT7g7tYQ_C8WrEqe4/edit';
+  const IMPORT_SHEET_NAME = 'Website Order';
+  
+  try {
+    const sourceSheet = SpreadsheetApp.openByUrl(IMPORT_SHEET_URL).getSheetByName(IMPORT_SHEET_NAME);
+    const destSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.ORDERS);
+    
+    const data = sourceSheet.getDataRange().getValues();
+    
+    // Skip header and process rows
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      
+      // Map columns from your existing sheet
+      // Adjust these indices based on your actual sheet structure
+      const orderId = `ORD${Date.now()}${i}`;
+      const timestamp = row[0]; // A - Timestamp
+      const customerName = row[4]; // E - Deenaa Sharma
+      const phone = row[5]; // F - Phone
+      const product = row[2]; // C - Product
+      const color = row[3]; // D - Color
+      const price = row[9] || row[10]; // J or K - Price
+      const status = 'new';
+      const city = row[6]; // G - City
+      
+      // Add to orders sheet
+      destSheet.appendRow([
+        orderId,
+        timestamp,
+        customerName,
+        phone,
+        product,
+        color,
+        price,
+        status,
+        city,
+        '', // Sent to Meta
+        '', // Event ID
+      ]);
+    }
+    
+    Logger.log(`Imported ${data.length - 1} orders`);
+  } catch (error) {
+    Logger.log(`Import error: ${error.message}`);
+  }
+}
+

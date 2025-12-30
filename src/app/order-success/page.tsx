@@ -1,14 +1,19 @@
 'use client';
 
-import { useEffect, Suspense } from 'react';
+import { useEffect, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle, MessageCircle, Truck, Phone, Banknote } from 'lucide-react';
 
-// Declare fbq for TypeScript
+// Declare fbq for TypeScript - Updated to support eventID
 declare global {
   interface Window {
-    fbq?: (action: string, event: string, params?: Record<string, unknown>) => void;
+    fbq?: (
+      action: string, 
+      event: string, 
+      params?: Record<string, unknown>,
+      options?: { eventID?: string }
+    ) => void;
   }
 }
 
@@ -21,6 +26,7 @@ const MessengerIcon = () => (
 
 function OrderSuccessContent() {
   const searchParams = useSearchParams();
+  const hasFiredPixel = useRef(false); // Prevent duplicate pixel fires
   
   // Get order details from URL params
   const orderType = searchParams.get('type') || 'buy';
@@ -32,6 +38,7 @@ function OrderSuccessContent() {
   const city = searchParams.get('city') || '';
   const deliveryLocation = searchParams.get('delivery') || ''; // 'inside' or 'outside'
   const productName = searchParams.get('product') || 'Seetara Chain Bag'; // Dynamic product name
+  const orderId = searchParams.get('order_id') || `seetara_${Date.now()}`; // Order ID for deduplication
 
   // Delivery message based on location
   const getDeliveryMessage = () => {
@@ -43,17 +50,30 @@ function OrderSuccessContent() {
     return 'Delivery within 3-5 business days';
   };
 
-  // Fire Facebook Pixel Purchase event on page load
+  // Fire Facebook Pixel Purchase event on page load with event_id for deduplication
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.fbq && orderType === 'buy') {
+    // Only fire once and only for buy orders
+    if (hasFiredPixel.current || orderType !== 'buy') return;
+    
+    if (typeof window !== 'undefined' && window.fbq) {
+      // Event ID = Order ID (SIMPLE! Must match Google Sheets script exactly!)
+      const eventId = orderId;
+      
+      // Fire Purchase event with eventID for deduplication with Conversions API
       window.fbq('track', 'Purchase', {
         value: parseFloat(grandTotal),
         currency: 'NPR',
         content_name: `${productName} - ${productColor}`,
         content_type: 'product',
-      });
+        order_id: orderId, // Include order ID in custom data
+      }, { eventID: eventId }); // IMPORTANT: eventID for deduplication
+      
+      hasFiredPixel.current = true;
+      
+      // Log for debugging (remove in production)
+      console.log('FB Pixel Purchase fired with eventID:', eventId);
     }
-  }, [orderType, grandTotal, productColor, productName]);
+  }, [orderType, grandTotal, productColor, productName, orderId]);
 
   // WhatsApp handler - opens WhatsApp with pre-filled message
   const handleWhatsAppClick = () => {

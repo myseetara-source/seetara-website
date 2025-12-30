@@ -1,6 +1,19 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { CheckCircle, MessageCircle, Phone, Gift, Sparkles } from 'lucide-react';
+
+// Declare fbq for TypeScript
+declare global {
+  interface Window {
+    fbq?: (
+      action: string, 
+      event: string, 
+      params?: Record<string, unknown>,
+      options?: { eventID?: string }
+    ) => void;
+  }
+}
 
 interface SuccessMessageProps {
   orderType: string;
@@ -13,6 +26,7 @@ interface SuccessMessageProps {
   onReset: () => void;
   productColor?: string;
   grandTotal?: number;
+  orderId?: string; // Add orderId for deduplication
 }
 
 // Function to open WhatsApp
@@ -81,7 +95,32 @@ const openWhatsApp = (formData: SuccessMessageProps['formData'], orderType: stri
   }
 };
 
-export default function SuccessMessage({ orderType, formData, onReset, productColor, grandTotal }: SuccessMessageProps) {
+export default function SuccessMessage({ orderType, formData, onReset, productColor, grandTotal, orderId }: SuccessMessageProps) {
+  const hasFiredPixel = useRef(false);
+
+  // Fire Facebook Pixel Purchase event ONCE with event_id for deduplication
+  useEffect(() => {
+    if (hasFiredPixel.current || orderType !== 'buy') return;
+    
+    if (typeof window !== 'undefined' && window.fbq) {
+      // Generate unique order ID
+      const uniqueOrderId = orderId || `sb107_${formData.phone}_${Date.now()}`;
+      // Event ID = Order ID (SIMPLE! Must match Google Sheets script exactly!)
+      const eventId = uniqueOrderId;
+      
+      window.fbq('track', 'Purchase', {
+        value: grandTotal || 0,
+        currency: 'NPR',
+        content_name: `Seetara Golden Chain Bag - ${productColor || 'Unknown'}`,
+        content_type: 'product',
+        order_id: uniqueOrderId,
+      }, { eventID: eventId });
+      
+      hasFiredPixel.current = true;
+      console.log('FB Pixel Purchase fired (SB107) with eventID:', eventId);
+    }
+  }, [orderType, grandTotal, productColor, formData.phone, orderId]);
+
   const handleWhatsAppClick = () => {
     openWhatsApp(formData, orderType, productColor, grandTotal);
   };

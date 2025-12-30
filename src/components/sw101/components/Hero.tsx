@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Play, X, Star, Sparkles, ShoppingCart } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Play, X, Sparkles, ShoppingCart, Zap, Smartphone } from 'lucide-react';
 import { productColors, products } from '../utils/constants';
 import { getVideoUrl } from '../config/r2Config';
 import Image from 'next/image';
@@ -21,7 +21,6 @@ export default function Hero({
 }: HeroProps) {
   const [isAnimating, setIsAnimating] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const [justSelectedIndex, setJustSelectedIndex] = useState<number | null>(null);
 
   const currentColor = productColors[selectedColorIndex];
   const currentProduct = products[currentColor];
@@ -61,11 +60,9 @@ export default function Hero({
   const handleColorSelect = (index: number) => {
     if (index === selectedColorIndex) return;
     setIsAnimating(true);
-    setJustSelectedIndex(index);
     setSelectedColorIndex(index);
     setShowVideo(false);
     setTimeout(() => setIsAnimating(false), 150);
-    setTimeout(() => setJustSelectedIndex(null), 200);
   };
 
   const scrollToOrder = () => {
@@ -73,21 +70,28 @@ export default function Hero({
   };
 
   return (
-    <div className="px-4 pt-2 pb-3 overflow-hidden lg:px-0 lg:pt-4"> 
+    <div className="px-4 pt-2 pb-3 overflow-hidden md:px-0"> 
       
       {/* Product Title */}
-      <div className="text-center mb-3 lg:mb-4">
-        <h1 className="text-xl lg:text-3xl font-black text-gray-900 leading-tight">
-          Seetara <span className="bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-600 bg-clip-text text-transparent">Multi-Functional</span> Bag
+      <div className="text-center mb-3">
+        <div className="inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-100 to-orange-100 px-3 py-1 rounded-full mb-2 border border-amber-200">
+          <Smartphone className="w-3.5 h-3.5 text-amber-600" />
+          <span className="text-[11px] font-bold text-amber-700">Phone + Wallet = All-in-One!</span>
+        </div>
+        <h1 className="text-xl font-black text-gray-900 leading-tight mb-1">
+          Seetara <span className="bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 bg-clip-text text-transparent">Smart</span> Wallet
         </h1>
+        <p className="text-sm text-gray-600 font-medium">
+          ✨ तान्नुहोस् — Phone निस्कन्छ! Card, Cash सबै एकैमा!
+        </p>
       </div>
 
       {/* Product Image Card */}
-      <div className={`relative rounded-3xl bg-white shadow-xl overflow-hidden mb-3 group ${showVideo ? 'aspect-[3/4]' : 'aspect-square'} transition-all duration-300 border border-gray-100`}> 
+      <div className={`relative rounded-3xl bg-gradient-to-b from-white to-gray-50 shadow-xl overflow-hidden mb-3 group ${showVideo ? 'aspect-[3/4]' : 'aspect-square'} transition-all duration-300 border border-gray-100`}> 
         
         {/* Discount Badge */}
-        <div className="absolute top-3 left-3 z-20 bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-2.5 py-1 rounded-full text-xs font-black shadow-lg flex items-center gap-1">
-          <Sparkles className="w-3 h-3" /> {discountPercent}% OFF
+        <div className="absolute top-3 left-3 z-20 bg-gradient-to-r from-red-500 to-orange-500 text-white px-2.5 py-1 rounded-full text-xs font-black shadow-lg flex items-center gap-1">
+          <Zap className="w-3 h-3" /> {discountPercent}% OFF
         </div>
 
         {/* Navigation Arrows */}
@@ -108,9 +112,9 @@ export default function Hero({
            </button>
         )}
 
-        {/* Best Seller Badge */}
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 bg-gradient-to-r from-amber-400 to-orange-500 text-white px-3 py-1 rounded-full flex items-center gap-1 text-xs font-black shadow-lg border-2 border-white">
-           <Star className="w-3 h-3 fill-current" /> Work Bag Bestseller
+        {/* Smart Feature Badge */}
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1 rounded-full flex items-center gap-1 text-xs font-black shadow-lg border-2 border-white">
+           <Smartphone className="w-3 h-3" /> Pull-Tab Magic!
         </div>
 
         {/* Image/Video Container */}
@@ -135,10 +139,10 @@ export default function Hero({
            ) : (
               <div className="w-full h-full relative">
                 {imageError ? (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-100 p-8">
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-50 to-orange-50 p-8">
                     <div className="text-center">
-                      <Star className="w-16 h-16 text-emerald-300 mx-auto mb-3" />
-                      <p className="text-gray-600 text-sm font-bold mb-1">Multi-Functional Bag</p>
+                      <Smartphone className="w-16 h-16 text-amber-300 mx-auto mb-3" />
+                      <p className="text-gray-600 text-sm font-bold mb-1">Smart Wallet</p>
                       <p className="text-gray-500 text-xs">{currentProduct.labelNp}</p>
                     </div>
                   </div>
@@ -149,15 +153,15 @@ export default function Hero({
                       <Image
                         key={color}
                         src={products[color].image}
-                        alt={`Seetara ${color} Multi-Functional Bag`}
+                        alt={`Seetara ${color} Smart Wallet`}
                         fill
                         sizes="(max-width: 768px) 100vw, 50vw"
-                        className={`object-cover transition-opacity duration-100 ${
+                        className={`object-contain p-4 transition-opacity duration-100 ${
                           index === selectedColorIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
                         }`}
                         priority
                         loading="eager"
-                        quality={90}
+                        quality={85}
                         onError={() => {
                           if (index === selectedColorIndex) {
                             setImageError(true);
@@ -175,7 +179,7 @@ export default function Hero({
       {/* Color Selector */}
       <div className="mb-3 flex flex-col items-center">
         <p className="text-xs font-semibold text-gray-600 mb-2">
-          ५ Colors मा उपलब्ध — Choose Yours
+          Choose Your Color
         </p>
         <div className="flex gap-2 items-center bg-white p-2 rounded-full shadow-md border border-gray-100">
           {productColors.map((color, index) => (
@@ -184,8 +188,8 @@ export default function Hero({
               onClick={() => handleColorSelect(index)}
               className={`relative w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
                 selectedColorIndex === index 
-                  ? `ring-2 ring-offset-2 ring-emerald-500 shadow-lg opacity-100 ${justSelectedIndex === index ? 'animate-pulse-once' : 'scale-110'}` 
-                  : 'opacity-50 hover:scale-105'
+                  ? 'ring-2 ring-offset-2 ring-amber-500 shadow-lg scale-110' 
+                  : 'hover:scale-105 opacity-70 hover:opacity-100'
               }`}
               style={{ backgroundColor: products[color].hex }}
               title={products[color].label}
@@ -200,8 +204,8 @@ export default function Hero({
         </p>
       </div>
 
-      {/* Price & CTA Section - Hide on desktop (form is visible on right) */}
-      <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 rounded-2xl p-4 border border-emerald-200 shadow-lg lg:hidden">
+      {/* Price & CTA Section */}
+      <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-red-50 rounded-2xl p-4 border border-amber-200 shadow-lg">
         {/* Price Display */}
         <div className="flex items-center justify-center gap-3 mb-2">
           <div className="text-center">
@@ -209,14 +213,14 @@ export default function Hero({
             <span className="text-[10px] text-red-500 font-bold ml-1">-{discountPercent}%</span>
           </div>
           <div className="text-center">
-            <span className="text-3xl font-black text-emerald-600">रु. {currentProduct.price}</span>
-            <span className="text-emerald-600 font-bold">/-</span>
+            <span className="text-3xl font-black text-amber-600">रु. {currentProduct.price}</span>
+            <span className="text-amber-600 font-bold">/-</span>
           </div>
         </div>
         
         {/* Savings Badge */}
         <div className="flex justify-center mb-3">
-          <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-md">
+          <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-md">
             <Sparkles className="w-3 h-3" />
             तपाईंको रु. {savings}/- बचत!
           </div>
@@ -225,7 +229,7 @@ export default function Hero({
         {/* Order Now CTA Button */}
         <button 
           onClick={scrollToOrder}
-          className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white py-3.5 rounded-xl font-bold text-base flex items-center justify-center gap-2 shadow-xl transition-all active:scale-[0.98] animate-cta-pulse"
+          className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white py-3.5 rounded-xl font-bold text-base flex items-center justify-center gap-2 shadow-xl transition-all active:scale-[0.98] animate-cta-pulse"
         >
           <ShoppingCart className="w-5 h-5" />
           अहिले Order गर्नुहोस्!
@@ -233,7 +237,7 @@ export default function Hero({
         
         {/* Trust Text */}
         <p className="text-center text-[10px] text-gray-500 mt-2">
-          💵 Cash on Delivery • 💼 Laptop Compatible • ✈️ Travel Ready
+          💵 Cash on Delivery • 📦 2-3 दिनमा Delivery
         </p>
       </div>
     </div>

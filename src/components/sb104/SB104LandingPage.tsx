@@ -220,6 +220,9 @@ export default function SB104LandingPage() {
       return;
     }
 
+    // Generate unique orderId BEFORE sending anywhere (for Meta Pixel deduplication)
+    const orderId = `sb104_${formData.phone}_${Date.now()}`;
+
     setIsSubmitting(true);
     setShowProcessing(true);
     setProcessingStep(0);
@@ -244,7 +247,7 @@ export default function SB104LandingPage() {
       await new Promise(resolve => setTimeout(resolve, 600));
       setProcessingStep(2);
 
-      // Step 3: Save to Google Sheets
+      // Step 3: Save to Google Sheets with orderId for deduplication
       const orderData = {
         name: formData.name,
         phone: formData.phone,
@@ -256,7 +259,8 @@ export default function SB104LandingPage() {
         total: grandTotal,
         orderType,
         productSKU: PRODUCT_SKU,
-        source: 'SB104'
+        source: 'SB104',
+        orderId: orderId, // CRITICAL: For Meta Pixel deduplication
       };
 
       await handleOrderSubmission(orderData, {
@@ -280,6 +284,7 @@ export default function SB104LandingPage() {
       successParams.set('phone', formData.phone);
       successParams.set('color', currentColor);
       successParams.set('product', 'Multi-Functional Bag');
+      successParams.set('order_id', orderId); // CRITICAL: Same orderId for Meta Pixel deduplication
       if (orderType === 'buy') {
         successParams.set('total', grandTotal.toString());
         successParams.set('address', formData.address);
@@ -299,6 +304,7 @@ export default function SB104LandingPage() {
       successParams.set('phone', formData.phone);
       successParams.set('color', currentColor);
       successParams.set('product', 'Multi-Functional Bag');
+      successParams.set('order_id', orderId); // CRITICAL: Same orderId for Meta Pixel deduplication
       if (orderType === 'buy') {
         successParams.set('total', grandTotal.toString());
         successParams.set('address', formData.address);

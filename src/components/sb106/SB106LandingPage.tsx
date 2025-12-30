@@ -144,6 +144,9 @@ export default function SB106LandingPage() {
     
     console.log('Form Submission:', orderData);
 
+    // Generate unique orderId BEFORE sending anywhere (for deduplication)
+    const orderId = `sb106_${formData.phone}_${Date.now()}`;
+
     try {
       // Helper function to ensure minimum step display time
       const minStepTime = async (promise: Promise<unknown>, minMs: number) => {
@@ -179,9 +182,8 @@ export default function SB106LandingPage() {
       // Step 2: Saving to Google Sheets
       setProcessingStep(2);
       
-      // Send to Google Sheets (show for at least 800ms)
-      // Note: If user is in Facebook/Instagram/Messenger, redirects to Messenger instead of WhatsApp
-      await minStepTime(handleOrderSubmission(orderData, {
+      // Send to Google Sheets with orderId for Meta Pixel deduplication
+      await minStepTime(handleOrderSubmission({ ...orderData, orderId }, {
         googleScriptUrl,
         whatsappNumber,
         messengerPageId
@@ -197,7 +199,7 @@ export default function SB106LandingPage() {
       setIsSubmitting(false);
       setProcessingStep(-1);
       
-      // Build query params for the success page
+      // Build query params for the success page (INCLUDING order_id for deduplication!)
       const successParams = new URLSearchParams({
         type: orderType,
         phone: formData.phone,
@@ -208,6 +210,7 @@ export default function SB106LandingPage() {
         address: formData.address,
         city: formData.city,
         delivery: deliveryLocation || '',
+        order_id: orderId, // CRITICAL: Same orderId for Meta Pixel deduplication
       });
       
       router.push(`/order-success?${successParams.toString()}`);

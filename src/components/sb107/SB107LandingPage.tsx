@@ -38,6 +38,7 @@ export default function SB107LandingPage() {
   const [deliveryLocation, setDeliveryLocation] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [currentOrderId, setCurrentOrderId] = useState<string>(''); // For Meta Pixel deduplication
   
   // Processing Overlay State
   const [showProcessing, setShowProcessing] = useState(false);
@@ -208,6 +209,10 @@ export default function SB107LandingPage() {
       return;
     }
 
+    // Generate unique orderId BEFORE sending anywhere (for Meta Pixel deduplication)
+    const orderId = `sb107_${formData.phone}_${Date.now()}`;
+    setCurrentOrderId(orderId);
+
     setIsSubmitting(true);
     setShowProcessing(true);
     setProcessingStep(0);
@@ -232,7 +237,7 @@ export default function SB107LandingPage() {
       await new Promise(resolve => setTimeout(resolve, 600));
       setProcessingStep(2);
 
-      // Step 3: Save to Google Sheets
+      // Step 3: Save to Google Sheets with orderId for deduplication
       const orderData = {
         name: formData.name,
         phone: formData.phone,
@@ -244,7 +249,8 @@ export default function SB107LandingPage() {
         total: grandTotal,
         orderType,
         productSKU: PRODUCT_SKU,
-        source: 'SB107'
+        source: 'SB107',
+        orderId: orderId, // CRITICAL: For Meta Pixel deduplication
       };
 
       await handleOrderSubmission(orderData, {
@@ -287,6 +293,7 @@ export default function SB107LandingPage() {
         onReset={handleReset}
         productColor={currentColor}
         grandTotal={grandTotal}
+        orderId={currentOrderId} // CRITICAL: Same orderId for Meta Pixel deduplication
       />
     );
   }

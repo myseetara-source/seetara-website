@@ -180,13 +180,19 @@ function setupSheet() {
   ordersSheet.setColumnWidth(13, 100); // Sent to Meta
   ordersSheet.setColumnWidth(14, 200); // Event ID
   
-  // Add data validation for Status column (L - updated from H)
+  // IMPORTANT: Clear ALL existing data validations first (to remove old validations from H column)
+  ordersSheet.getRange('A2:N1000').clearDataValidations();
+  
+  // Add data validation for Status column ONLY (L column)
   const statusRule = SpreadsheetApp.newDataValidation()
     .requireValueInList(['Intake', 'Converted', 'Cancelled'], true)
     .setAllowInvalid(false)
     .setHelpText('Select: Intake, Converted, or Cancelled')
     .build();
   ordersSheet.getRange('L2:L1000').setDataValidation(statusRule);
+  
+  // Order Type column (H) should NOT have dropdown - it gets "Purchase" or "Inquiry" from website
+  // No validation needed for H column
   
   // Add conditional formatting for Status column
   // Intake = Yellow, Converted = Green, Cancelled = Red

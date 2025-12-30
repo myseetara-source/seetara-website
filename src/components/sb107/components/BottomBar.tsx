@@ -61,7 +61,7 @@ export default function BottomBar({
           </span>
           <span className="text-gray-300">•</span>
           <span className="flex items-center gap-1">
-            <Gift className="w-3 h-3 text-pink-500" /> Free Makeup Purse
+            <Gift className="w-3 h-3 text-pink-500" /> Free Strap
           </span>
         </div>
       </div>

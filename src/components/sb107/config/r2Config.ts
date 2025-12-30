@@ -11,6 +11,10 @@ export const R2_IMAGE_URLS: Record<string, string> = {
   'Black': 'https://pub-618cb6a991114e6b97382558a5b2adea.r2.dev/SB106/black-handbag.webp',
 };
 
+// Thumbnail image for initial page load (Maroon color showcase)
+// Save as: maroon-thumbnail.webp in SB106 folder
+export const THUMBNAIL_IMAGE_URL = `${R2_BASE_URL}/maroon-thumbnail.webp`;
+
 // Seetara Brand Logo - Cloudflare R2 URL
 export const SEETARA_LOGO_URL = `${R2_BASE_URL}/seetara-logo.png`;
 

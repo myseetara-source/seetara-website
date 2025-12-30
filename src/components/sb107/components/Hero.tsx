@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Play, X, Star, Sparkles, ShoppingCart, Zap } from 'lucide-react';
 import { productColors, products } from '../utils/constants';
-import { getVideoUrl } from '../config/r2Config';
+import { getVideoUrl, THUMBNAIL_IMAGE_URL } from '../config/r2Config';
 import Image from 'next/image';
 
 interface HeroProps {
@@ -21,14 +21,22 @@ export default function Hero({
 }: HeroProps) {
   const [isAnimating, setIsAnimating] = useState(false);
   const [imageError, setImageError] = useState(false);
+  // Track if user has ever changed color - show thumbnail only on first load
+  const hasChangedColor = useRef(false);
+  const [showThumbnail, setShowThumbnail] = useState(true);
 
   const currentColor = productColors[selectedColorIndex];
   const currentProduct = products[currentColor];
   const videoUrl = getVideoUrl();
   const savings = currentProduct.originalPrice - currentProduct.price;
 
-  // Preload ALL product images on mount for instant switching
+  // Preload ALL product images + thumbnail on mount for instant switching
   useEffect(() => {
+    // Preload thumbnail
+    const thumbnailImg = new window.Image();
+    thumbnailImg.src = THUMBNAIL_IMAGE_URL;
+    
+    // Preload all color variants
     productColors.forEach((color) => {
       const img = new window.Image();
       img.src = products[color].image;
@@ -44,7 +52,12 @@ export default function Hero({
     if (isAnimating) return;
     setIsAnimating(true);
     setSelectedColorIndex((selectedColorIndex + 1) % productColors.length);
-    setShowVideo(false); 
+    setShowVideo(false);
+    // Hide thumbnail once user navigates
+    if (!hasChangedColor.current) {
+      hasChangedColor.current = true;
+      setShowThumbnail(false);
+    }
     setTimeout(() => setIsAnimating(false), 150);
   };
 
@@ -53,6 +66,11 @@ export default function Hero({
     setIsAnimating(true);
     setSelectedColorIndex((selectedColorIndex - 1 + productColors.length) % productColors.length);
     setShowVideo(false);
+    // Hide thumbnail once user navigates
+    if (!hasChangedColor.current) {
+      hasChangedColor.current = true;
+      setShowThumbnail(false);
+    }
     setTimeout(() => setIsAnimating(false), 150);
   };
 
@@ -61,6 +79,11 @@ export default function Hero({
     setIsAnimating(true);
     setSelectedColorIndex(index);
     setShowVideo(false);
+    // Hide thumbnail once user selects any color
+    if (!hasChangedColor.current) {
+      hasChangedColor.current = true;
+      setShowThumbnail(false);
+    }
     setTimeout(() => setIsAnimating(false), 150);
   };
 
@@ -82,7 +105,7 @@ export default function Hero({
       </div>
 
       {/* Product Image Card */}
-      <div className={`relative rounded-3xl bg-gradient-to-b from-white to-gray-50 shadow-xl overflow-hidden mb-3 group ${showVideo ? 'aspect-[3/4]' : 'aspect-square'} transition-all duration-300 border border-gray-100`}> 
+      <div className={`relative rounded-[2rem] bg-gray-50 shadow-xl shadow-gray-200/50 overflow-hidden mb-3 group cursor-zoom-in ${showVideo ? 'aspect-[3/4]' : 'aspect-square'} transition-all duration-300`}> 
         
         {/* Discount Badge */}
         <div className="absolute top-3 left-3 z-20 bg-gradient-to-r from-red-500 to-orange-500 text-white px-2.5 py-1 rounded-full text-xs font-black shadow-lg flex items-center gap-1">
@@ -132,7 +155,7 @@ export default function Hero({
                  </button>
               </div>
            ) : (
-              <div className="w-full h-full relative">
+              <div className="w-full h-full animate-float group-hover:scale-110 transition-transform duration-700 ease-in-out relative">
                 {imageError ? (
                   <div className="w-full h-full flex items-center justify-center bg-gray-100 p-8">
                     <div className="text-center">
@@ -143,15 +166,29 @@ export default function Hero({
                   </div>
                 ) : (
                   <>
-                    {/* Render ALL images but only show current one - instant switching */}
-                    {productColors.map((color, index) => (
+                    {/* Show thumbnail on first load (Maroon selected, no user interaction yet) */}
+                    {showThumbnail && selectedColorIndex === 0 && (
+                      <Image
+                        src={THUMBNAIL_IMAGE_URL}
+                        alt="Seetara Golden Chain Bag - Maroon"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        className="object-contain object-center z-20"
+                        priority
+                        loading="eager"
+                        quality={90}
+                      />
+                    )}
+                    
+                    {/* Regular product images - shown after user changes color */}
+                    {!showThumbnail && productColors.map((color, index) => (
                       <Image
                         key={color}
                         src={products[color].image}
                         alt={`Seetara ${color} Bag`}
                         fill
                         sizes="(max-width: 768px) 100vw, 50vw"
-                        className={`object-contain p-4 transition-opacity duration-100 ${
+                        className={`object-contain p-2 transition-opacity duration-100 ${
                           index === selectedColorIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
                         }`}
                         priority
@@ -232,7 +269,7 @@ export default function Hero({
         
         {/* Trust Text */}
         <p className="text-center text-[10px] text-gray-500 mt-2">
-          💵 Cash on Delivery • 🎁 Free Makeup Purse
+          💵 Cash on Delivery • 🎁 Free Side Adjustable Strap
         </p>
       </div>
     </div>

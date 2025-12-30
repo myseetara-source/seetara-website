@@ -43,13 +43,13 @@ export default function OrderForm({
 
   return (
     <div id="order-form" className="px-4 py-4 scroll-mt-20">
-      {/* Section Header - Free Makeup Purse Highlight */}
+      {/* Section Header - Free Side Adjustable Strap Highlight */}
       <div className="text-center mb-4">
         <div className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-100 to-purple-100 px-4 py-2 rounded-full shadow-md border border-pink-200 mb-2 animate-pulse">
           <Gift className="w-5 h-5 text-pink-600" />
-          <span className="text-sm font-black text-pink-700">FREE Makeup Purse! 🎁</span>
+          <span className="text-sm font-black text-pink-700">FREE Side Adjustable Strap! 🎁</span>
         </div>
-        <p className="text-xs text-gray-600">अहिले Order गर्नुहोस् - Free मा Makeup Purse पाउनुहोस्!</p>
+        <p className="text-xs text-gray-600">अहिले Order गर्नुहोस् - Free मा Side Adjustable Strap पाउनुहोस्!</p>
       </div>
 
       {/* Form Card */}
@@ -268,9 +268,9 @@ export default function OrderForm({
           </button>
           
           {/* Trust Note */}
-          <div className="flex items-center justify-center gap-2 mt-3 text-[10px] text-gray-500">
-            <ShieldCheck className="w-3.5 h-3.5 text-green-500" />
-            <span>Bag आयेपछि हेरेर पैसा दिनुहोस्</span>
+          <div className="flex items-center justify-center gap-2 mt-3 text-[11px] text-gray-600 bg-green-50 px-3 py-2 rounded-lg border border-green-100">
+            <ShieldCheck className="w-4 h-4 text-green-600" />
+            <span className="font-medium">🔒 100% Secure COD • 📦 Open Box Delivery</span>
           </div>
         </div>
       </form>

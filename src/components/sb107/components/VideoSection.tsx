@@ -1,6 +1,6 @@
 'use client';
 
-import { Play, Eye } from 'lucide-react';
+import { Play } from 'lucide-react';
 import { getVideoUrl } from '../config/r2Config';
 
 export default function VideoSection() {
@@ -27,16 +27,6 @@ export default function VideoSection() {
              loop
              playsInline
           />
-          
-          {/* HD Badge */}
-          <div className="absolute top-3 right-3 bg-black/70 text-white text-[9px] px-2 py-1 rounded-full backdrop-blur-sm font-bold flex items-center gap-1">
-            <Eye className="w-3 h-3" /> HD
-          </div>
-          
-          {/* Real Product Badge */}
-          <div className="absolute top-3 left-3 bg-gradient-to-r from-red-500 to-pink-500 text-white text-[9px] px-2.5 py-1 rounded-full font-bold animate-pulse shadow-lg">
-            🔴 LIVE
-          </div>
        </div>
     </div>
   );

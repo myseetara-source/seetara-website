@@ -22,96 +22,71 @@ export default function Features({ stockLeft, viewers }: FeaturesProps) {
   return (
     <div className="px-4 py-4 space-y-4">
       
-      {/* LIVE STATS BAR - Enhanced Animation */}
-      <div className={`relative rounded-2xl overflow-hidden shadow-xl transition-all duration-700 ${isStatsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-        {/* Animated Background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-red-600 via-orange-500 to-red-600 animate-gradient-x"></div>
-        <div className="absolute inset-0 bg-black/10"></div>
+      {/* LIVE STATS BAR - Clean & Readable Design */}
+      <div className={`relative rounded-2xl overflow-hidden shadow-lg transition-all duration-700 ${isStatsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+        {/* Clean Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-800 via-slate-900 to-slate-800"></div>
         
-        {/* Floating particles */}
-        <div className="absolute inset-0 overflow-hidden">
-          {[...Array(5)].map((_, i) => (
-            <div 
-              key={i}
-              className="absolute w-1 h-1 bg-white/40 rounded-full animate-float-particle"
-              style={{
-                left: `${20 + i * 15}%`,
-                animationDelay: `${i * 0.3}s`
-              }}
-            />
-          ))}
-        </div>
-        
-        <div className="relative z-10 p-4 text-white">
-          <div className="flex items-center justify-between mb-3">
+        <div className="relative z-10 p-4">
+          {/* Stats Row */}
+          <div className="flex items-center justify-between mb-4 bg-white/10 rounded-xl p-3">
             {/* Stock Left */}
             <div className="text-center flex-1">
-              <div className="flex items-center gap-1 justify-center mb-1">
-                <Flame className="w-5 h-5 animate-pulse text-yellow-300" />
-                <span className="text-3xl font-black animate-pulse">{stockLeft}</span>
+              <div className="flex items-center gap-1.5 justify-center mb-1">
+                <Flame className="w-4 h-4 text-orange-400" />
+                <span className="text-2xl font-black text-white">{stockLeft}</span>
               </div>
-              <p className="text-[10px] text-white/80">बाँकी छ</p>
+              <p className="text-[11px] text-gray-300 font-medium">बाँकी छ</p>
             </div>
             
             {/* Divider */}
-            <div className="w-px h-12 bg-white/30"></div>
+            <div className="w-px h-10 bg-white/20"></div>
             
             {/* Viewers */}
             <div className="text-center flex-1">
-              <div className="flex items-center gap-1 justify-center mb-1">
-                <Eye className="w-5 h-5 text-blue-200" />
-                <span className="text-3xl font-black">{viewers}</span>
+              <div className="flex items-center gap-1.5 justify-center mb-1">
+                <Eye className="w-4 h-4 text-cyan-400" />
+                <span className="text-2xl font-black text-white">{viewers}</span>
               </div>
-              <p className="text-[10px] text-white/80">हेर्दैछन्</p>
+              <p className="text-[11px] text-gray-300 font-medium">हेर्दैछन्</p>
             </div>
             
             {/* Divider */}
-            <div className="w-px h-12 bg-white/30"></div>
+            <div className="w-px h-10 bg-white/20"></div>
             
             {/* Sold Today */}
             <div className="text-center flex-1">
-              <div className="flex items-center gap-1 justify-center mb-1">
-                <TrendingUp className="w-5 h-5 text-green-300" />
-                <span className="text-3xl font-black">47</span>
+              <div className="flex items-center gap-1.5 justify-center mb-1">
+                <TrendingUp className="w-4 h-4 text-green-400" />
+                <span className="text-2xl font-black text-white">47</span>
               </div>
-              <p className="text-[10px] text-white/80">आज बिक्यो</p>
+              <p className="text-[11px] text-gray-300 font-medium">आज बिक्यो</p>
             </div>
           </div>
           
-          {/* Progress Bar - Urgency Gradient */}
-          <div className="bg-black/30 rounded-xl p-2">
-            <div className="flex items-center justify-between text-[11px] font-bold mb-2 px-1">
-              <span className="flex items-center gap-1">
-                <span className="animate-bounce text-lg">🔥</span> 
+          {/* Progress Section */}
+          <div className="bg-white rounded-xl p-3 shadow-inner">
+            <div className="flex items-center justify-between mb-2">
+              <span className="flex items-center gap-1.5 text-sm font-bold text-gray-800">
+                <span className="text-lg">🔥</span> 
                 {soldPercentage.toFixed(0)}% बिक्री भयो
               </span>
-              <span className="text-white bg-red-600 px-2 py-0.5 rounded-full text-[10px] animate-pulse">
+              <span className="text-white bg-red-500 px-3 py-1 rounded-full text-xs font-bold shadow-md">
                 छिटो गर्नुहोस्!
               </span>
             </div>
-            <div className="h-4 bg-gray-800/50 rounded-full overflow-hidden relative">
-              {/* Background track with segments */}
-              <div className="absolute inset-0 flex">
-                <div className="flex-1 bg-green-900/30"></div>
-                <div className="flex-1 bg-yellow-900/30"></div>
-                <div className="flex-1 bg-orange-900/30"></div>
-                <div className="flex-1 bg-red-900/30"></div>
-              </div>
-              {/* Progress fill - green to red gradient */}
+            <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
               <div 
                 className="h-full rounded-full transition-all duration-1000 relative overflow-hidden"
                 style={{ 
                   width: `${soldPercentage}%`,
-                  background: 'linear-gradient(90deg, #22c55e 0%, #84cc16 25%, #eab308 50%, #f97316 75%, #ef4444 100%)'
+                  background: 'linear-gradient(90deg, #22c55e 0%, #84cc16 30%, #eab308 60%, #f97316 80%, #ef4444 100%)'
                 }}
               >
-                {/* Shimmer effect */}
-                <div className="absolute inset-0 animate-shimmer-fast bg-gradient-to-r from-transparent via-white/50 to-transparent"></div>
-                {/* Pulse glow at the end */}
-                <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-white/60 to-transparent animate-pulse"></div>
+                <div className="absolute inset-0 animate-shimmer-fast bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
               </div>
             </div>
-            <p className="text-center text-[10px] text-white/70 mt-1">
+            <p className="text-center text-xs text-gray-600 mt-2 font-medium">
               ⚠️ Stock सकिँदै छ - अहिले नै Order गर्नुहोस्!
             </p>
           </div>

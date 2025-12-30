@@ -29,7 +29,7 @@ const SHEETS = {
 };
 
 // Column indices (0-based) - Match with sheet headers
-// A: Order ID | B: Timestamp | C: Customer Name | D: Phone | E: Product | F: Color | G: Price | H: Status | I: City | J: Sent to Meta | K: Event ID
+// A: Order ID | B: Timestamp | C: Customer Name | D: Phone | E: Product | F: Color | G: Price | H: Order Type | I: Address | J: City | K: Delivery Zone | L: Status | M: Sent to Meta | N: Event ID
 const COLUMNS = {
   ORDER_ID: 0,      // A
   TIMESTAMP: 1,     // B
@@ -38,10 +38,13 @@ const COLUMNS = {
   PRODUCT: 4,       // E
   COLOR: 5,         // F
   PRICE: 6,         // G
-  STATUS: 7,        // H
-  CITY: 8,          // I
-  SENT_TO_META: 9,  // J
-  EVENT_ID: 10,     // K
+  ORDER_TYPE: 7,    // H - NEW: Purchase or Inquiry
+  ADDRESS: 8,       // I - NEW: Full address
+  CITY: 9,          // J
+  DELIVERY_ZONE: 10, // K - NEW: Inside Valley / Outside Valley
+  STATUS: 11,       // L
+  SENT_TO_META: 12, // M
+  EVENT_ID: 13,     // N
 };
 
 // ============================================
@@ -65,7 +68,7 @@ function doPost(e) {
     // Get the Orders sheet
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.ORDERS);
     
-    // Add new row with order data
+    // Add new row with order data - includes all fields
     // Status defaults to "Intake"
     sheet.appendRow([
       orderId,                              // A: Order ID (from website or generated)
@@ -75,10 +78,13 @@ function doPost(e) {
       data.productSKU || data.product || 'Seetara Product', // E: Product
       data.color || '',                     // F: Color
       data.grandTotal || data.price || 0,   // G: Price
-      'Intake',                             // H: Status (default = Intake)
-      data.city || '',                      // I: City
-      '',                                   // J: Sent to Meta (empty)
-      '',                                   // K: Event ID (empty)
+      data.orderType || 'Purchase',         // H: Order Type (Purchase/Inquiry)
+      data.address || '',                   // I: Address
+      data.city || '',                      // J: City
+      data.deliveryLocation || data.deliveryZone || '', // K: Delivery Zone (inside/outside)
+      'Intake',                             // L: Status (default = Intake)
+      '',                                   // M: Sent to Meta (empty)
+      '',                                   // N: Event ID (empty)
     ]);
     
     Logger.log(`✅ New order added: ${orderId}`);
@@ -127,7 +133,7 @@ function setupSheet() {
     ordersSheet = ss.insertSheet(SHEETS.ORDERS);
   }
   
-  // Set headers in Row 1
+  // Set headers in Row 1 - Updated with all fields
   const headers = [
     'Order ID',      // A
     'Timestamp',     // B
@@ -136,10 +142,13 @@ function setupSheet() {
     'Product',       // E
     'Color',         // F
     'Price',         // G
-    'Status',        // H
-    'City',          // I
-    'Sent to Meta',  // J
-    'Event ID'       // K
+    'Order Type',    // H - NEW
+    'Address',       // I - NEW
+    'City',          // J
+    'Delivery Zone', // K - NEW
+    'Status',        // L
+    'Sent to Meta',  // M
+    'Event ID'       // N
   ];
   
   // Write headers
@@ -155,7 +164,7 @@ function setupSheet() {
   // Freeze header row
   ordersSheet.setFrozenRows(1);
   
-  // Set column widths
+  // Set column widths - Updated for new columns
   ordersSheet.setColumnWidth(1, 180);  // Order ID
   ordersSheet.setColumnWidth(2, 180);  // Timestamp
   ordersSheet.setColumnWidth(3, 150);  // Customer Name
@@ -163,22 +172,25 @@ function setupSheet() {
   ordersSheet.setColumnWidth(5, 150);  // Product
   ordersSheet.setColumnWidth(6, 100);  // Color
   ordersSheet.setColumnWidth(7, 80);   // Price
-  ordersSheet.setColumnWidth(8, 100);  // Status
-  ordersSheet.setColumnWidth(9, 120);  // City
-  ordersSheet.setColumnWidth(10, 100); // Sent to Meta
-  ordersSheet.setColumnWidth(11, 200); // Event ID
+  ordersSheet.setColumnWidth(8, 100);  // Order Type
+  ordersSheet.setColumnWidth(9, 200);  // Address
+  ordersSheet.setColumnWidth(10, 120); // City
+  ordersSheet.setColumnWidth(11, 130); // Delivery Zone
+  ordersSheet.setColumnWidth(12, 100); // Status
+  ordersSheet.setColumnWidth(13, 100); // Sent to Meta
+  ordersSheet.setColumnWidth(14, 200); // Event ID
   
-  // Add data validation for Status column (H)
+  // Add data validation for Status column (L - updated from H)
   const statusRule = SpreadsheetApp.newDataValidation()
     .requireValueInList(['Intake', 'Converted', 'Cancelled'], true)
     .setAllowInvalid(false)
     .setHelpText('Select: Intake, Converted, or Cancelled')
     .build();
-  ordersSheet.getRange('H2:H1000').setDataValidation(statusRule);
+  ordersSheet.getRange('L2:L1000').setDataValidation(statusRule);
   
   // Add conditional formatting for Status column
   // Intake = Yellow, Converted = Green, Cancelled = Red
-  const statusRange = ordersSheet.getRange('H2:H1000');
+  const statusRange = ordersSheet.getRange('L2:L1000');
   
   // Clear existing rules
   const rules = ordersSheet.getConditionalFormatRules();

@@ -38,7 +38,13 @@ function OrderSuccessContent() {
   const city = searchParams.get('city') || '';
   const deliveryLocation = searchParams.get('delivery') || ''; // 'inside' or 'outside'
   const productName = searchParams.get('product') || 'Seetara Chain Bag'; // Dynamic product name
-  const orderId = searchParams.get('order_id') || `seetara_${Date.now()}`; // Order ID for deduplication
+  
+  // FIX: Get orderId from URL params, and check sessionStorage to prevent duplicate fires on refresh
+  const urlOrderId = searchParams.get('order_id');
+  const orderId = urlOrderId || `seetara_${phone}_${Date.now()}`; // Include phone for uniqueness
+  
+  // Check if this order was already fired (prevents duplicate on page refresh)
+  const orderAlreadyFired = typeof window !== 'undefined' && sessionStorage.getItem(`pixel_fired_${orderId}`) === 'true';
 
   // Delivery message based on location
   const getDeliveryMessage = () => {
@@ -52,8 +58,14 @@ function OrderSuccessContent() {
 
   // Fire Facebook Pixel Purchase event on page load with event_id for deduplication
   useEffect(() => {
-    // Only fire once and only for buy orders
-    if (hasFiredPixel.current || orderType !== 'buy') return;
+    // IMPORTANT: Multiple checks to prevent duplicate fires
+    // 1. Check if already fired in this render
+    // 2. Check if not a buy order
+    // 3. Check if already fired for this orderId (via sessionStorage)
+    if (hasFiredPixel.current || orderType !== 'buy' || orderAlreadyFired) {
+      console.log('FB Pixel Purchase SKIPPED - already fired or not buy order');
+      return;
+    }
     
     if (typeof window !== 'undefined' && window.fbq) {
       // Event ID = Order ID (SIMPLE! Must match Google Sheets script exactly!)
@@ -70,10 +82,12 @@ function OrderSuccessContent() {
       
       hasFiredPixel.current = true;
       
-      // Log for debugging (remove in production)
+      // Store in sessionStorage to prevent duplicate fires on page refresh
+      sessionStorage.setItem(`pixel_fired_${orderId}`, 'true');
+      
       console.log('FB Pixel Purchase fired with eventID:', eventId);
     }
-  }, [orderType, grandTotal, productColor, productName, orderId]);
+  }, [orderType, grandTotal, productColor, productName, orderId, orderAlreadyFired]);
 
   // WhatsApp handler - opens WhatsApp with pre-filled message
   const handleWhatsAppClick = () => {

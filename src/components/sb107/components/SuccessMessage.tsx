@@ -97,15 +97,22 @@ const openWhatsApp = (formData: SuccessMessageProps['formData'], orderType: stri
 
 export default function SuccessMessage({ orderType, formData, onReset, productColor, grandTotal, orderId }: SuccessMessageProps) {
   const hasFiredPixel = useRef(false);
+  
+  // Generate unique order ID (use passed orderId or generate one)
+  const uniqueOrderId = orderId || `sb107_${formData.phone}_${Date.now()}`;
+  
+  // Check if this order was already fired (prevents duplicate on component re-render)
+  const orderAlreadyFired = typeof window !== 'undefined' && sessionStorage.getItem(`pixel_fired_${uniqueOrderId}`) === 'true';
 
   // Fire Facebook Pixel Purchase event ONCE with event_id for deduplication
   useEffect(() => {
-    if (hasFiredPixel.current || orderType !== 'buy') return;
+    // Multiple checks to prevent duplicate fires
+    if (hasFiredPixel.current || orderType !== 'buy' || orderAlreadyFired) {
+      console.log('FB Pixel Purchase (SB107) SKIPPED - already fired or not buy order');
+      return;
+    }
     
     if (typeof window !== 'undefined' && window.fbq) {
-      // Generate unique order ID
-      const uniqueOrderId = orderId || `sb107_${formData.phone}_${Date.now()}`;
-      // Event ID = Order ID (SIMPLE! Must match Google Sheets script exactly!)
       const eventId = uniqueOrderId;
       
       window.fbq('track', 'Purchase', {
@@ -117,9 +124,13 @@ export default function SuccessMessage({ orderType, formData, onReset, productCo
       }, { eventID: eventId });
       
       hasFiredPixel.current = true;
+      
+      // Store in sessionStorage to prevent duplicate fires
+      sessionStorage.setItem(`pixel_fired_${uniqueOrderId}`, 'true');
+      
       console.log('FB Pixel Purchase fired (SB107) with eventID:', eventId);
     }
-  }, [orderType, grandTotal, productColor, formData.phone, orderId]);
+  }, [orderType, grandTotal, productColor, uniqueOrderId, orderAlreadyFired]);
 
   const handleWhatsAppClick = () => {
     openWhatsApp(formData, orderType, productColor, grandTotal);

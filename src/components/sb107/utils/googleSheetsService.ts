@@ -47,20 +47,39 @@ export const sendToGoogleSheet = async (data: OrderData, scriptUrl?: string): Pr
 
     console.log('Sending to Google Sheets:', sheetData);
 
+    // FIX: Use text/plain to avoid CORS preflight issues
+    // Google Apps Script can still parse JSON from text/plain body
     const response = await fetch(scriptUrl, {
       method: 'POST',
-      mode: 'no-cors',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'text/plain;charset=utf-8',
       },
       body: JSON.stringify(sheetData),
+      redirect: 'follow', // Important for Google Apps Script redirects
     });
 
-    console.log('Data sent to Google Sheets successfully');
+    console.log('Data sent to Google Sheets, status:', response.status);
     return true;
   } catch (error) {
     console.error('Error sending to Google Sheets:', error);
-    return false;
+    
+    // Fallback: Try with sendBeacon for reliability
+    try {
+      const orderId = data.orderId || `sb107_${data.phone}_${Date.now()}`;
+      const sheetData = {
+        orderId, timestamp: new Date().toLocaleString('en-US', { timeZone: 'Asia/Kathmandu' }),
+        orderType: data.orderType === 'buy' ? 'Purchase' : 'Inquiry',
+        productSKU: data.sku || 'Seetara SB107 Product', color: data.color,
+        customerName: data.name, phone: data.phone, city: data.city || 'N/A',
+        grandTotal: data.grandTotal || data.price,
+      };
+      navigator.sendBeacon(scriptUrl, JSON.stringify(sheetData));
+      console.log('Fallback: Data sent via sendBeacon');
+      return true;
+    } catch (beaconError) {
+      console.error('Beacon also failed:', beaconError);
+      return false;
+    }
   }
 };
 

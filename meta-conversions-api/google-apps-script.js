@@ -1,13 +1,15 @@
 /**
  * Seetara Meta Conversions API - Google Sheets Integration
  * 
- * This script sends server-side events to Meta Conversions API
- * to fix duplicate events and improve ad algorithm.
+ * This script does TWO things:
+ * 1. RECEIVES orders from website (Web App)
+ * 2. SENDS events to Meta Conversions API
  * 
  * SETUP:
  * 1. Update PIXEL_ID and ACCESS_TOKEN below
- * 2. Set up time-based triggers in Apps Script
- * 3. Monitor in Meta Events Manager
+ * 2. Deploy as Web App (Execute as: Me, Access: Anyone)
+ * 3. Copy Web App URL to website's NEXT_PUBLIC_GOOGLE_SCRIPT_URL
+ * 4. Set up time-based triggers for Meta events
  */
 
 // ============================================
@@ -16,7 +18,7 @@
 const CONFIG = {
   PIXEL_ID: '2046274132882959',
   ACCESS_TOKEN: 'EAAbVARQRUmQBQd3pnOyZCKf68TlMzNfmwK7l5GZARQoRQ27bEBZBbj2R2aTsFe34JkSDtJ9PUkTm9ZBUzdMNOEb3vqb9P3r2sJwXdXmFQXFfqY5ar9ZAiAoKsmBWsRETqbuffwSZBDomoYaxfX47hSSi26g9xpQ9wnsZBhF0V5vxxBmmDwd2ZAbUAnakRelG6DpQPQZDZD',
-  API_VERSION: 'v24.0',
+  API_VERSION: 'v20.0', // Fixed: v20.0 is stable (v24.0 may not be available yet)
   TEST_EVENT_CODE: '', // Leave empty for production, add code for testing
 };
 
@@ -26,7 +28,8 @@ const SHEETS = {
   SENT_EVENTS: 'Sent Events',
 };
 
-// Column indices (0-based)
+// Column indices (0-based) - Match with sheet headers
+// A: Order ID | B: Timestamp | C: Customer Name | D: Phone | E: Product | F: Color | G: Price | H: Status | I: City | J: Sent to Meta | K: Event ID
 const COLUMNS = {
   ORDER_ID: 0,      // A
   TIMESTAMP: 1,     // B
@@ -40,6 +43,196 @@ const COLUMNS = {
   SENT_TO_META: 9,  // J
   EVENT_ID: 10,     // K
 };
+
+// ============================================
+// WEB APP - RECEIVE ORDERS FROM WEBSITE
+// ============================================
+
+/**
+ * Handle POST requests from website
+ * This is called when a customer places an order
+ * 
+ * FIX: Uses orderId from website if provided (for deduplication)
+ */
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+    
+    // FIX: Use orderId from website if provided, otherwise generate new one
+    // This ensures deduplication works correctly between Pixel and CAPI
+    const orderId = data.orderId || data.id || `ORD${Date.now()}`;
+    
+    // Get the Orders sheet
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.ORDERS);
+    
+    // Add new row with order data
+    // Status defaults to "Intake"
+    sheet.appendRow([
+      orderId,                              // A: Order ID (from website or generated)
+      data.timestamp || new Date().toLocaleString('en-US', { timeZone: 'Asia/Kathmandu' }), // B: Timestamp
+      data.customerName || data.name || '', // C: Customer Name
+      data.phone || '',                     // D: Phone
+      data.productSKU || data.product || 'Seetara Product', // E: Product
+      data.color || '',                     // F: Color
+      data.grandTotal || data.price || 0,   // G: Price
+      'Intake',                             // H: Status (default = Intake)
+      data.city || '',                      // I: City
+      '',                                   // J: Sent to Meta (empty)
+      '',                                   // K: Event ID (empty)
+    ]);
+    
+    Logger.log(`✅ New order added: ${orderId}`);
+    
+    // Return success response with the orderId used
+    return ContentService
+      .createTextOutput(JSON.stringify({ success: true, orderId: orderId }))
+      .setMimeType(ContentService.MimeType.JSON);
+      
+  } catch (error) {
+    Logger.log(`❌ Error in doPost: ${error.message}`);
+    
+    return ContentService
+      .createTextOutput(JSON.stringify({ success: false, error: error.message }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+/**
+ * Handle GET requests (for testing)
+ */
+function doGet(e) {
+  return ContentService
+    .createTextOutput(JSON.stringify({ 
+      status: 'Seetara Orders API is running!',
+      message: 'Use POST to submit orders'
+    }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ============================================
+// SHEET SETUP - RUN THIS ONCE!
+// ============================================
+
+/**
+ * 🚀 RUN THIS FUNCTION FIRST!
+ * Sets up the sheet with proper headers and formatting
+ * Only run once when setting up the sheet
+ */
+function setupSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  // Create or get Orders sheet
+  let ordersSheet = ss.getSheetByName(SHEETS.ORDERS);
+  if (!ordersSheet) {
+    ordersSheet = ss.insertSheet(SHEETS.ORDERS);
+  }
+  
+  // Set headers in Row 1
+  const headers = [
+    'Order ID',      // A
+    'Timestamp',     // B
+    'Customer Name', // C
+    'Phone',         // D
+    'Product',       // E
+    'Color',         // F
+    'Price',         // G
+    'Status',        // H
+    'City',          // I
+    'Sent to Meta',  // J
+    'Event ID'       // K
+  ];
+  
+  // Write headers
+  ordersSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  
+  // Format headers - Bold, Background color, Freeze
+  const headerRange = ordersSheet.getRange(1, 1, 1, headers.length);
+  headerRange.setFontWeight('bold');
+  headerRange.setBackground('#4285f4');
+  headerRange.setFontColor('#ffffff');
+  headerRange.setHorizontalAlignment('center');
+  
+  // Freeze header row
+  ordersSheet.setFrozenRows(1);
+  
+  // Set column widths
+  ordersSheet.setColumnWidth(1, 180);  // Order ID
+  ordersSheet.setColumnWidth(2, 180);  // Timestamp
+  ordersSheet.setColumnWidth(3, 150);  // Customer Name
+  ordersSheet.setColumnWidth(4, 120);  // Phone
+  ordersSheet.setColumnWidth(5, 150);  // Product
+  ordersSheet.setColumnWidth(6, 100);  // Color
+  ordersSheet.setColumnWidth(7, 80);   // Price
+  ordersSheet.setColumnWidth(8, 100);  // Status
+  ordersSheet.setColumnWidth(9, 120);  // City
+  ordersSheet.setColumnWidth(10, 100); // Sent to Meta
+  ordersSheet.setColumnWidth(11, 200); // Event ID
+  
+  // Add data validation for Status column (H)
+  const statusRule = SpreadsheetApp.newDataValidation()
+    .requireValueInList(['Intake', 'Converted', 'Cancelled'], true)
+    .setAllowInvalid(false)
+    .setHelpText('Select: Intake, Converted, or Cancelled')
+    .build();
+  ordersSheet.getRange('H2:H1000').setDataValidation(statusRule);
+  
+  // Add conditional formatting for Status column
+  // Intake = Yellow, Converted = Green, Cancelled = Red
+  const statusRange = ordersSheet.getRange('H2:H1000');
+  
+  // Clear existing rules
+  const rules = ordersSheet.getConditionalFormatRules();
+  
+  // Intake = Yellow
+  const intakeRule = SpreadsheetApp.newConditionalFormatRule()
+    .whenTextEqualTo('Intake')
+    .setBackground('#fff2cc')
+    .setRanges([statusRange])
+    .build();
+  
+  // Converted = Green
+  const convertedRule = SpreadsheetApp.newConditionalFormatRule()
+    .whenTextEqualTo('Converted')
+    .setBackground('#d9ead3')
+    .setFontColor('#137333')
+    .setRanges([statusRange])
+    .build();
+  
+  // Cancelled = Red
+  const cancelledRule = SpreadsheetApp.newConditionalFormatRule()
+    .whenTextEqualTo('Cancelled')
+    .setBackground('#f4cccc')
+    .setFontColor('#cc0000')
+    .setRanges([statusRange])
+    .build();
+  
+  // Apply rules
+  ordersSheet.setConditionalFormatRules([intakeRule, convertedRule, cancelledRule]);
+  
+  // Create Sent Events sheet (for tracking)
+  let sentEventsSheet = ss.getSheetByName(SHEETS.SENT_EVENTS);
+  if (!sentEventsSheet) {
+    sentEventsSheet = ss.insertSheet(SHEETS.SENT_EVENTS);
+    sentEventsSheet.getRange(1, 1, 1, 3).setValues([['Event Key', 'Event Type', 'Sent At']]);
+    sentEventsSheet.getRange(1, 1, 1, 3).setFontWeight('bold').setBackground('#4285f4').setFontColor('#ffffff');
+    sentEventsSheet.setFrozenRows(1);
+  }
+  
+  Logger.log('✅ Sheet setup complete!');
+  Logger.log('📋 Headers added: ' + headers.join(', '));
+  Logger.log('🎨 Status dropdown added with colors: Intake (Yellow), Converted (Green), Cancelled (Red)');
+  
+  // Show success message
+  SpreadsheetApp.getUi().alert(
+    '✅ Setup Complete!',
+    'Sheet is ready:\n\n' +
+    '• Headers added\n' +
+    '• Status dropdown created (Intake, Converted, Cancelled)\n' +
+    '• Colors applied\n\n' +
+    'Next: Deploy as Web App and set up Triggers!',
+    SpreadsheetApp.getUi().ButtonSet.OK
+  );
+}
 
 // ============================================
 // MAIN FUNCTIONS

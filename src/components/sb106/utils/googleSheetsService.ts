@@ -13,6 +13,7 @@ interface OrderData {
   price: number;
   deliveryCharge?: number;
   grandTotal?: number;
+  orderId?: string; // For deduplication with Meta Pixel
 }
 
 /**
@@ -25,7 +26,11 @@ export const sendToGoogleSheet = async (data: OrderData, scriptUrl?: string): Pr
   }
 
   try {
+    // Generate orderId for deduplication (same format as FB Pixel eventId)
+    const orderId = data.orderId || `sb106_${data.phone}_${Date.now()}`;
+    
     const sheetData = {
+      orderId: orderId, // IMPORTANT: For Meta Pixel deduplication
       timestamp: new Date().toLocaleString('en-US', { timeZone: 'Asia/Kathmandu' }),
       orderType: data.orderType === 'buy' ? 'Purchase' : 'Inquiry',
       productSKU: data.sku || 'Seetara Viral Chain Bag',

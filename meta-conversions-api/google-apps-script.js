@@ -1,15 +1,25 @@
 /**
  * Seetara Meta Conversions API - Google Sheets Integration
  * 
- * This script does TWO things:
+ * ⚠️ DEDUPLICATION FIX APPLIED ⚠️
+ * 
+ * This script does THREE things:
  * 1. RECEIVES orders from website (Web App)
- * 2. SENDS events to Meta Conversions API
+ * 2. SENDS Purchase events to Meta when status = "Converted"
+ * 3. SENDS Refund events to Meta when status = "Cancelled"
+ * 
+ * HOW DEDUPLICATION WORKS:
+ * - Website Browser Pixel fires: fbq('track', 'Purchase', {...}, { eventID: orderId })
+ * - This script (CAPI) fires:    event_id: orderId (EXACT SAME!)
+ * - Facebook sees both with same ID → counts as 1 purchase (not 2!)
  * 
  * SETUP:
  * 1. Update PIXEL_ID and ACCESS_TOKEN below
  * 2. Deploy as Web App (Execute as: Me, Access: Anyone)
  * 3. Copy Web App URL to website's NEXT_PUBLIC_GOOGLE_SCRIPT_URL
- * 4. Set up time-based triggers for Meta events
+ * 4. Set up time-based triggers:
+ *    - sendNewPurchaseEvents (every 5 mins)
+ *    - sendStatusUpdateEvents (every 5 mins)
  */
 
 // ============================================
@@ -345,7 +355,16 @@ function sendStatusUpdateEvents() {
 // ============================================
 
 /**
- * Send Purchase event to Meta
+ * Send Purchase event to Meta (CAPI)
+ * 
+ * ⚠️ DEDUPLICATION:
+ * The event_id here MUST match the eventID sent by Browser Pixel
+ * Both use: orderId directly (no prefix!)
+ * 
+ * Browser Pixel: { eventID: "sb107_9841234567_1735567890" }
+ * CAPI (here):   { event_id: "sb107_9841234567_1735567890" }
+ * 
+ * Result: Facebook counts as 1 purchase, not 2
  */
 function sendPurchaseEvent(row, rowNumber) {
   const orderId = row[COLUMNS.ORDER_ID];
@@ -355,14 +374,17 @@ function sendPurchaseEvent(row, rowNumber) {
   const product = row[COLUMNS.PRODUCT];
   const city = row[COLUMNS.CITY];
   
+  // CRITICAL: This must match Browser Pixel's eventID exactly!
   const eventId = generateEventId(orderId);
   const eventTime = getUnixTimestamp(timestamp);
+  
+  Logger.log(`Sending Purchase for Order: ${orderId}, EventID: ${eventId}`);
   
   const payload = {
     data: [{
       event_name: 'Purchase',
       event_time: eventTime,
-      event_id: eventId, // IMPORTANT: For deduplication
+      event_id: eventId, // ⚠️ MUST match Browser Pixel's eventID for deduplication!
       action_source: 'website',
       user_data: {
         ph: [hashPhone(phone)],
@@ -471,14 +493,22 @@ function sendToMeta(payload) {
 
 /**
  * Generate event ID for deduplication
- * IMPORTANT: Must match EXACTLY with website's event ID!
  * 
- * SIMPLE IS BEST: Just use orderId directly
- * Website र Sheet दुवैमा यही format use गर्नुहोस्
+ * ⚠️ CRITICAL FOR DEDUPLICATION ⚠️
+ * This MUST return EXACTLY the same ID that the website's Browser Pixel sends!
+ * 
+ * Website (Browser Pixel) sends: eventID = orderId
+ * This script (CAPI) sends:      event_id = orderId
+ * 
+ * When both match → Facebook deduplicates → counts as 1 purchase
+ * When different → Facebook counts as 2 separate purchases!
+ * 
+ * DO NOT add prefixes like "purchase_" or "capi_" here!
  */
 function generateEventId(orderId) {
-  // Just orderId - simple and consistent!
-  // Example: "ORD1001" or "sb107_9841234567_1735567890"
+  // EXACT same format as website's eventID - no modifications!
+  // Website sends: fbq('track', 'Purchase', {...}, { eventID: orderId })
+  // We send:       event_id: orderId
   return String(orderId);
 }
 

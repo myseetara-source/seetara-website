@@ -56,36 +56,45 @@ function OrderSuccessContent() {
     return 'Delivery within 3-5 business days';
   };
 
-  // Fire Facebook Pixel Purchase event on page load with event_id for deduplication
+  // DEDUPLICATION FIX: Fire Purchase with EXACT same eventID as CAPI
+  // Facebook will deduplicate events with matching event_id within 48 hours
+  // If order is cancelled, CAPI sends Refund event to adjust ROAS
   useEffect(() => {
-    // IMPORTANT: Multiple checks to prevent duplicate fires
-    // 1. Check if already fired in this render
-    // 2. Check if not a buy order
-    // 3. Check if already fired for this orderId (via sessionStorage)
-    if (hasFiredPixel.current || orderType !== 'buy' || orderAlreadyFired) {
-      console.log('FB Pixel Purchase SKIPPED - already fired or not buy order');
+    if (hasFiredPixel.current || orderAlreadyFired) {
+      console.log('FB Pixel event SKIPPED - already fired');
       return;
     }
     
     if (typeof window !== 'undefined' && window.fbq) {
-      // Event ID = Order ID (SIMPLE! Must match Google Sheets script exactly!)
+      // CRITICAL: eventID must EXACTLY match CAPI's event_id for deduplication
+      // Both use orderId directly (no prefix!)
       const eventId = orderId;
       
-      // Fire Purchase event with eventID for deduplication with Conversions API
-      window.fbq('track', 'Purchase', {
-        value: parseFloat(grandTotal),
-        currency: 'NPR',
-        content_name: `${productName} - ${productColor}`,
-        content_type: 'product',
-        order_id: orderId, // Include order ID in custom data
-      }, { eventID: eventId }); // IMPORTANT: eventID for deduplication
+      if (orderType === 'buy') {
+        // Fire Purchase with eventID = orderId (matches CAPI exactly)
+        window.fbq('track', 'Purchase', {
+          value: parseFloat(grandTotal),
+          currency: 'NPR',
+          content_name: `${productName} - ${productColor}`,
+          content_type: 'product',
+          content_ids: [productName],
+          order_id: orderId,
+        }, { eventID: eventId }); // EXACT same ID as CAPI sends
+        
+        console.log('✅ FB Pixel Purchase fired with eventID:', eventId);
+        console.log('   (CAPI will send same event_id for deduplication)');
+      } else {
+        // For inquiries, fire Lead event
+        window.fbq('track', 'Lead', {
+          content_name: `${productName} - ${productColor}`,
+          content_type: 'product',
+        }, { eventID: `lead_${eventId}` });
+        
+        console.log('FB Pixel Lead fired for inquiry');
+      }
       
       hasFiredPixel.current = true;
-      
-      // Store in sessionStorage to prevent duplicate fires on page refresh
       sessionStorage.setItem(`pixel_fired_${orderId}`, 'true');
-      
-      console.log('FB Pixel Purchase fired with eventID:', eventId);
     }
   }, [orderType, grandTotal, productColor, productName, orderId, orderAlreadyFired]);
 

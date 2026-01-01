@@ -104,31 +104,45 @@ export default function SuccessMessage({ orderType, formData, onReset, productCo
   // Check if this order was already fired (prevents duplicate on component re-render)
   const orderAlreadyFired = typeof window !== 'undefined' && sessionStorage.getItem(`pixel_fired_${uniqueOrderId}`) === 'true';
 
-  // Fire Facebook Pixel Purchase event ONCE with event_id for deduplication
+  // DEDUPLICATION FIX: Fire Purchase with EXACT same eventID as CAPI
+  // Facebook will deduplicate events with matching event_id within 48 hours
+  // If order is cancelled, CAPI sends Refund event to adjust ROAS
   useEffect(() => {
-    // Multiple checks to prevent duplicate fires
-    if (hasFiredPixel.current || orderType !== 'buy' || orderAlreadyFired) {
-      console.log('FB Pixel Purchase (SB107) SKIPPED - already fired or not buy order');
+    if (hasFiredPixel.current || orderAlreadyFired) {
+      console.log('FB Pixel event (SB107) SKIPPED - already fired');
       return;
     }
     
     if (typeof window !== 'undefined' && window.fbq) {
+      // CRITICAL: eventID must EXACTLY match CAPI's event_id for deduplication
+      // Both use orderId directly (no prefix!)
       const eventId = uniqueOrderId;
       
-      window.fbq('track', 'Purchase', {
-        value: grandTotal || 0,
-        currency: 'NPR',
-        content_name: `Seetara Golden Chain Bag - ${productColor || 'Unknown'}`,
-        content_type: 'product',
-        order_id: uniqueOrderId,
-      }, { eventID: eventId });
+      if (orderType === 'buy') {
+        // Fire Purchase with eventID = orderId (matches CAPI exactly)
+        window.fbq('track', 'Purchase', {
+          value: grandTotal || 0,
+          currency: 'NPR',
+          content_name: `Seetara Golden Chain Bag - ${productColor || 'Unknown'}`,
+          content_type: 'product',
+          content_ids: ['Seetara Golden Chain Bag'],
+          order_id: uniqueOrderId,
+        }, { eventID: eventId }); // EXACT same ID as CAPI sends
+        
+        console.log('✅ FB Pixel Purchase fired (SB107) with eventID:', eventId);
+        console.log('   (CAPI will send same event_id for deduplication)');
+      } else {
+        // For inquiries, fire Lead event
+        window.fbq('track', 'Lead', {
+          content_name: `Seetara Golden Chain Bag - ${productColor || 'Unknown'}`,
+          content_type: 'product',
+        }, { eventID: `lead_${eventId}` });
+        
+        console.log('FB Pixel Lead fired (SB107)');
+      }
       
       hasFiredPixel.current = true;
-      
-      // Store in sessionStorage to prevent duplicate fires
       sessionStorage.setItem(`pixel_fired_${uniqueOrderId}`, 'true');
-      
-      console.log('FB Pixel Purchase fired (SB107) with eventID:', eventId);
     }
   }, [orderType, grandTotal, productColor, uniqueOrderId, orderAlreadyFired]);
 

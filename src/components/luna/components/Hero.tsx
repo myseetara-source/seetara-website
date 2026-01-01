@@ -1,0 +1,279 @@
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+import { ChevronLeft, ChevronRight, Play, X, Star, Sparkles, ShoppingCart, Zap, Moon } from 'lucide-react';
+import { productColors, products } from '../utils/constants';
+import { getVideoUrl, THUMBNAIL_IMAGE_URL } from '../config/r2Config';
+import Image from 'next/image';
+
+interface HeroProps {
+  selectedColorIndex: number;
+  setSelectedColorIndex: (index: number) => void;
+  showVideo: boolean;
+  setShowVideo: (show: boolean) => void;
+}
+
+export default function Hero({ 
+  selectedColorIndex, 
+  setSelectedColorIndex, 
+  showVideo, 
+  setShowVideo 
+}: HeroProps) {
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const hasChangedColor = useRef(false);
+  const [showThumbnail, setShowThumbnail] = useState(true);
+
+  const currentColor = productColors[selectedColorIndex];
+  const currentProduct = products[currentColor];
+  const videoUrl = getVideoUrl();
+  const savings = currentProduct.originalPrice - currentProduct.price;
+  const discountPercent = Math.round((savings / currentProduct.originalPrice) * 100);
+
+  // Preload ALL product images + thumbnail on mount for instant switching
+  useEffect(() => {
+    // Preload thumbnail
+    const thumbnailImg = new window.Image();
+    thumbnailImg.src = THUMBNAIL_IMAGE_URL;
+    
+    // Preload all color variants
+    productColors.forEach((color) => {
+      const img = new window.Image();
+      img.src = products[color].image;
+    });
+  }, []);
+
+  // Reset error state on color change
+  useEffect(() => {
+    setImageError(false);
+  }, [selectedColorIndex]);
+
+  const handleNext = () => {
+    if (isAnimating) return;
+    setIsAnimating(true);
+    setSelectedColorIndex((selectedColorIndex + 1) % productColors.length);
+    setShowVideo(false);
+    if (!hasChangedColor.current) {
+      hasChangedColor.current = true;
+      setShowThumbnail(false);
+    }
+    setTimeout(() => setIsAnimating(false), 150);
+  };
+
+  const handlePrev = () => {
+    if (isAnimating) return;
+    setIsAnimating(true);
+    setSelectedColorIndex((selectedColorIndex - 1 + productColors.length) % productColors.length);
+    setShowVideo(false);
+    if (!hasChangedColor.current) {
+      hasChangedColor.current = true;
+      setShowThumbnail(false);
+    }
+    setTimeout(() => setIsAnimating(false), 150);
+  };
+
+  const handleColorSelect = (index: number) => {
+    if (index === selectedColorIndex) return;
+    setIsAnimating(true);
+    setSelectedColorIndex(index);
+    setShowVideo(false);
+    if (!hasChangedColor.current) {
+      hasChangedColor.current = true;
+      setShowThumbnail(false);
+    }
+    setTimeout(() => setIsAnimating(false), 150);
+  };
+
+  const scrollToOrder = () => {
+    document.getElementById('order-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  return (
+    <div className="px-4 pt-2 pb-3 overflow-hidden md:px-0"> 
+      
+      {/* Product Title - Luna themed */}
+      <div className="text-center mb-3">
+        <div className="flex items-center justify-center gap-2 mb-1">
+          <Moon className="w-5 h-5 text-amber-500" />
+          <h1 className="text-xl font-black text-gray-900 leading-tight">
+            The <span className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 bg-clip-text text-transparent">Luna Bag</span>
+          </h1>
+          <Moon className="w-5 h-5 text-amber-500" />
+        </div>
+        <p className="text-sm text-gray-600 font-medium">
+          Laptop • Books • Essentials
+        </p>
+      </div>
+
+      {/* Product Image Card - Light theme */}
+      <div className={`relative rounded-[2rem] bg-amber-50 shadow-xl shadow-amber-200/50 overflow-hidden mb-3 group cursor-zoom-in ${showVideo ? 'aspect-[3/4]' : 'aspect-square'} transition-all duration-300 border border-amber-200`}> 
+        
+        {/* Discount Badge */}
+        <div className="absolute top-3 left-3 z-20 bg-gradient-to-r from-red-500 to-orange-500 text-white px-2.5 py-1 rounded-full text-xs font-black shadow-lg flex items-center gap-1">
+          <Zap className="w-3 h-3" /> {discountPercent}% OFF
+        </div>
+
+        {/* Navigation Arrows */}
+        <button onClick={handlePrev} className="absolute left-2 top-1/2 -translate-y-1/2 z-30 p-2 bg-white/95 backdrop-blur-sm rounded-full shadow-lg hover:bg-white active:scale-90 transition-all">
+           <ChevronLeft className="w-5 h-5 text-gray-800" />
+        </button>
+        <button onClick={handleNext} className="absolute right-2 top-1/2 -translate-y-1/2 z-30 p-2 bg-white/95 backdrop-blur-sm rounded-full shadow-lg hover:bg-white active:scale-90 transition-all">
+           <ChevronRight className="w-5 h-5 text-gray-800" />
+        </button>
+
+        {/* Video Button */}
+        {!showVideo && (
+           <button 
+             onClick={() => setShowVideo(true)}
+             className="absolute top-3 right-3 z-20 bg-black/80 hover:bg-black text-white px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1 transition-all shadow-lg"
+           >
+              <Play className="w-3 h-3 fill-current" /> Video
+           </button>
+        )}
+
+        {/* Best Seller Badge */}
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-3 py-1 rounded-full flex items-center gap-1 text-xs font-black shadow-lg border-2 border-white">
+           <Star className="w-3 h-3 fill-current" /> New Launch
+        </div>
+
+        {/* Image/Video Container */}
+        <div className={`w-full h-full transition-all duration-150 ${isAnimating ? 'opacity-70 scale-[0.98]' : 'opacity-100 scale-100'}`}>
+           {showVideo ? (
+              <div className="w-full h-full bg-black relative">
+                 <video 
+                   src={videoUrl}
+                   className="w-full h-full object-cover"
+                   controls
+                   autoPlay
+                   playsInline
+                   loop
+                 />
+                 <button 
+                   onClick={() => setShowVideo(false)}
+                   className="absolute top-3 right-3 bg-black/50 backdrop-blur-md p-2 rounded-full text-white z-30 hover:bg-black/70 transition-colors"
+                 >
+                    <X className="w-5 h-5" />
+                 </button>
+              </div>
+           ) : (
+              <div className="w-full h-full animate-float group-hover:scale-110 transition-transform duration-700 ease-in-out relative">
+                {imageError ? (
+                  <div className="w-full h-full flex items-center justify-center bg-amber-50 p-8">
+                    <div className="text-center">
+                      <Moon className="w-16 h-16 text-amber-400 mx-auto mb-3" />
+                      <p className="text-gray-800 text-sm font-bold mb-1">The Luna Bag</p>
+                      <p className="text-gray-500 text-xs">{currentProduct.labelNp}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Show thumbnail on first load */}
+                    {showThumbnail && selectedColorIndex === 0 && (
+                      <Image
+                        src={THUMBNAIL_IMAGE_URL}
+                        alt="Seetara Luna Bag"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        className="object-contain object-center z-20"
+                        priority
+                        loading="eager"
+                        quality={90}
+                      />
+                    )}
+                    
+                    {/* Regular product images */}
+                    {!showThumbnail && productColors.map((color, index) => (
+                      <Image
+                        key={color}
+                        src={products[color].image}
+                        alt={`Seetara Luna ${color} Bag`}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        className={`object-contain p-2 transition-opacity duration-100 ${
+                          index === selectedColorIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                        }`}
+                        priority
+                        loading="eager"
+                        quality={90}
+                        onError={() => {
+                          if (index === selectedColorIndex) {
+                            setImageError(true);
+                          }
+                        }}
+                      />
+                    ))}
+                  </>
+                )}
+              </div>
+           )}
+        </div>
+      </div>
+
+      {/* Color Selector - Light theme */}
+      <div className="mb-3 flex flex-col items-center">
+        <p className="text-xs font-semibold text-gray-600 mb-2">
+          Choose Your Color
+        </p>
+        <div className="flex gap-2 items-center bg-white p-2 rounded-full shadow-md border border-amber-200">
+          {productColors.map((color, index) => (
+            <button
+              key={color}
+              onClick={() => handleColorSelect(index)}
+              className={`relative w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                selectedColorIndex === index 
+                  ? 'ring-2 ring-offset-2 ring-amber-500 shadow-lg scale-110' 
+                  : 'hover:scale-105 opacity-70 hover:opacity-100'
+              }`}
+              style={{ backgroundColor: products[color].hex }}
+              title={products[color].label}
+            />
+          ))}
+        </div>
+        {/* Selected Color Text */}
+        <p className="mt-2 text-xs text-gray-600">
+          You selected: <span className="font-bold text-gray-900">{currentProduct.label}</span>
+          <span className="text-gray-400 mx-1">•</span>
+          <span className="text-gray-500">{currentProduct.labelNp} छानियो</span>
+        </p>
+      </div>
+
+      {/* Price & CTA Section - Luna themed light */}
+      <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 rounded-2xl p-4 border border-amber-200 shadow-lg">
+        {/* Price Display */}
+        <div className="flex items-center justify-center gap-3 mb-2">
+          <div className="text-center">
+            <span className="text-gray-400 text-sm line-through">रु. {currentProduct.originalPrice}</span>
+            <span className="text-[10px] text-red-500 font-bold ml-1">-{discountPercent}%</span>
+          </div>
+          <div className="text-center">
+            <span className="text-3xl font-black text-amber-600">रु. {currentProduct.price}</span>
+            <span className="text-amber-600 font-bold">/-</span>
+          </div>
+        </div>
+        
+        {/* Savings Badge */}
+        <div className="flex justify-center mb-3">
+          <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-md">
+            <Sparkles className="w-3 h-3" />
+            तपाईंको रु. {savings}/- बचत!
+          </div>
+        </div>
+
+        {/* Order Now CTA Button */}
+        <button 
+          onClick={scrollToOrder}
+          className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white py-3.5 rounded-xl font-bold text-base flex items-center justify-center gap-2 shadow-xl transition-all active:scale-[0.98] animate-cta-pulse"
+        >
+          <ShoppingCart className="w-5 h-5" />
+          अहिले Order गर्नुहोस्!
+        </button>
+        
+        {/* Trust Text */}
+        <p className="text-center text-[10px] text-gray-500 mt-2">
+          💵 Cash on Delivery • 👜 Free Matching Pouch
+        </p>
+      </div>
+    </div>
+  );
+}
+

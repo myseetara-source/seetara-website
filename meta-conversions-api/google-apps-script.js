@@ -314,6 +314,12 @@ function sendNewPurchaseEvents() {
  * 
  * This sends negative signal to Meta when order is cancelled
  * so algorithm learns which leads are bad quality
+ * 
+ * ⚠️ IMPORTANT FOR COD ORDERS:
+ * - Browser Pixel fires Purchase immediately when order is placed
+ * - If order is later cancelled, we send Refund event to Meta
+ * - This tells Meta: "This purchase was cancelled - low quality lead"
+ * - Meta algorithm learns to avoid showing ads to similar users
  */
 function sendStatusUpdateEvents() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.ORDERS);
@@ -327,6 +333,7 @@ function sendStatusUpdateEvents() {
     const row = data[i];
     const orderId = row[COLUMNS.ORDER_ID];
     const status = String(row[COLUMNS.STATUS]).trim().toLowerCase();
+    const alreadySentToMeta = row[COLUMNS.SENT_TO_META];
     
     if (!orderId) continue;
     
@@ -335,19 +342,33 @@ function sendStatusUpdateEvents() {
     if (isEventAlreadySent(sentEventsSheet, statusEventKey)) continue;
     
     let success = false;
+    let eventId = '';
     
     // Only send event for Cancelled orders (negative signal to Meta)
     if (status === 'cancelled') {
       success = sendCancelledEvent(row, i + 1);
+      eventId = `refund_${orderId}`;
     }
     
     if (success) {
       eventsSent++;
       markEventAsSent(sentEventsSheet, statusEventKey, status);
+      
+      // FIX: Also update the main Orders sheet to show event was sent
+      // Mark as "REFUND" to distinguish from Purchase events
+      if (alreadySentToMeta === 'YES') {
+        // Purchase was already sent, now adding Refund
+        sheet.getRange(i + 1, COLUMNS.SENT_TO_META + 1).setValue('YES+REFUND');
+      } else {
+        sheet.getRange(i + 1, COLUMNS.SENT_TO_META + 1).setValue('REFUND');
+      }
+      sheet.getRange(i + 1, COLUMNS.EVENT_ID + 1).setValue(eventId);
+      
+      Logger.log(`✅ Refund event sent for cancelled order: ${orderId}`);
     }
   }
   
-  Logger.log(`Sent ${eventsSent} Cancelled events to Meta`);
+  Logger.log(`Sent ${eventsSent} Cancelled/Refund events to Meta`);
 }
 
 // ============================================
@@ -412,35 +433,57 @@ function sendPurchaseEvent(row, rowNumber) {
  * Send Cancelled/Refund event to Meta
  * For E-commerce, "Refund" is better than "Lead"
  * 
+ * ⚠️ WHY THIS IS IMPORTANT FOR AD OPTIMIZATION:
+ * - Browser Pixel fires Purchase when user places COD order
+ * - But COD order might get cancelled (didn't pay, fake order, etc.)
+ * - Without Refund event, Meta thinks ALL orders are successful
+ * - Meta will keep targeting similar users who cancel orders
+ * 
+ * With Refund event:
+ * - Meta knows this Purchase was cancelled/refunded
+ * - Meta adjusts attribution - doesn't count as successful conversion
+ * - Meta algorithm learns: "Users like this tend to cancel"
+ * - Over time, Meta shows ads to higher quality leads
+ * 
  * This tells Facebook:
  * - This purchase was cancelled/refunded
  * - Helps calculate accurate ROAS
- * - Algorithm learns which leads cancel
+ * - Algorithm learns which leads cancel (low quality)
  */
 function sendCancelledEvent(row, rowNumber) {
   const orderId = row[COLUMNS.ORDER_ID];
   const phone = row[COLUMNS.PHONE];
   const price = row[COLUMNS.PRICE];
+  const product = row[COLUMNS.PRODUCT];
+  const city = row[COLUMNS.CITY];
+  const customerName = row[COLUMNS.CUSTOMER_NAME];
   
   // Use consistent event ID format (no Date.now!)
   const eventId = `refund_${orderId}`;
   const eventTime = Math.floor(Date.now() / 1000);
   
+  Logger.log(`🔴 Sending Refund event for cancelled order: ${orderId}, Customer: ${customerName}, Amount: ${price}`);
+  
   const payload = {
     data: [{
-      event_name: 'Refund', // Better for E-commerce than Lead
+      event_name: 'Refund', // Standard event for cancelled purchases
       event_time: eventTime,
       event_id: eventId,
       action_source: 'system_generated',
       user_data: {
         ph: [hashPhone(phone)],
+        ct: [hashString(city?.toLowerCase() || 'kathmandu')],
         country: [hashString('np')],
       },
       custom_data: {
         currency: 'NPR',
-        value: parseFloat(price) || 0, // Negative value signals refund
+        value: parseFloat(price) || 0, // Original order value
+        content_name: product || 'Seetara Product',
+        content_type: 'product',
         order_id: String(orderId),
         refund_reason: 'order_cancelled',
+        // Custom fields for analysis
+        cancellation_type: 'cod_cancelled', // Cash on delivery cancelled
       },
     }],
   };

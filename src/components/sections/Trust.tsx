@@ -128,11 +128,6 @@ export default function Trust() {
                       View Document
                     </motion.button>
                   </div>
-                  
-                  {/* Icon Badge */}
-                  <div className="absolute top-4 right-4 w-12 h-12 bg-white rounded-xl shadow-lg flex items-center justify-center">
-                    <cert.icon className="w-6 h-6 text-[#C9A227]" />
-                  </div>
                 </div>
 
                 {/* Content */}

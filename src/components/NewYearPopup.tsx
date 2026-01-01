@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { X, Sparkles, Gift, Star } from 'lucide-react';
 import Image from 'next/image';
 import { LOGO } from '@/lib/images';
@@ -8,8 +9,17 @@ import { LOGO } from '@/lib/images';
 export default function NewYearPopup() {
   const [isVisible, setIsVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
+    // ONLY show popup on main page (seetara.com.np or seetara.com.np/)
+    // Don't show on sub-pages like /sb106, /sb107, /sb104, etc.
+    const isMainPage = pathname === '/' || pathname === '';
+    
+    if (!isMainPage) {
+      return; // Don't show popup on sub-pages
+    }
+    
     // Check if already shown today
     const lastShown = localStorage.getItem('seetara_newyear_popup_2026');
     const today = new Date().toDateString();
@@ -21,7 +31,7 @@ export default function NewYearPopup() {
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [pathname]);
 
   const handleClose = () => {
     setIsClosing(true);

@@ -6,7 +6,6 @@ import { CartProvider } from "@/context/CartContext";
 import { WishlistProvider } from "@/context/WishlistContext";
 import CartDrawer from "@/components/CartDrawer";
 import GlobalModals from "@/components/GlobalModals";
-import NewYearPopup from "@/components/NewYearPopup";
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
@@ -96,7 +95,6 @@ export default function RootLayout({
             {children}
             <CartDrawer />
             <GlobalModals />
-            <NewYearPopup />
           </WishlistProvider>
         </CartProvider>
       </body>

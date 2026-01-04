@@ -222,6 +222,13 @@ export default function SB104LandingPage() {
 
     // Generate unique orderId BEFORE sending anywhere (for Meta Pixel deduplication)
     const orderId = `sb104_${formData.phone}_${Date.now()}`;
+    
+    // CRITICAL FIX: Store orderId in sessionStorage as backup
+    // This prevents deduplication failures if URL param is lost during redirect
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('pending_order_id', orderId);
+      console.log('✅ OrderId saved to sessionStorage for deduplication:', orderId);
+    }
 
     setIsSubmitting(true);
     setShowProcessing(true);

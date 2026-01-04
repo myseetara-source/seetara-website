@@ -39,9 +39,32 @@ function OrderSuccessContent() {
   const deliveryLocation = searchParams.get('delivery') || ''; // 'inside' or 'outside'
   const productName = searchParams.get('product') || 'Seetara Chain Bag'; // Dynamic product name
   
-  // FIX: Get orderId from URL params, and check sessionStorage to prevent duplicate fires on refresh
+  // CRITICAL FIX: Get orderId from multiple sources to ensure deduplication works
+  // Priority: 1. URL param, 2. sessionStorage (backup), 3. Generate new (last resort)
   const urlOrderId = searchParams.get('order_id');
-  const orderId = urlOrderId || `seetara_${phone}_${Date.now()}`; // Include phone for uniqueness
+  
+  // Try sessionStorage as fallback if URL param is missing (can happen during redirect)
+  const sessionOrderId = typeof window !== 'undefined' ? sessionStorage.getItem('pending_order_id') : null;
+  
+  let orderId: string;
+  if (urlOrderId) {
+    orderId = urlOrderId;
+    console.log('✅ Using orderId from URL:', orderId);
+  } else if (sessionOrderId) {
+    orderId = sessionOrderId;
+    console.warn('⚠️ URL order_id missing! Using sessionStorage fallback:', orderId);
+  } else {
+    // Last resort - this should rarely happen
+    orderId = `seetara_${phone}_${Date.now()}`;
+    console.error('❌ DEDUPLICATION WARNING: No orderId found! Generated new:', orderId);
+    console.error('   This will cause duplicate events in Facebook Ads Manager!');
+  }
+  
+  // Clear the pending_order_id after reading (one-time use)
+  if (typeof window !== 'undefined' && sessionOrderId) {
+    // Don't clear immediately - keep for page refresh protection
+    // sessionStorage.removeItem('pending_order_id');
+  }
   
   // Check if this order was already fired (prevents duplicate on page refresh)
   const orderAlreadyFired = typeof window !== 'undefined' && sessionStorage.getItem(`pixel_fired_${orderId}`) === 'true';

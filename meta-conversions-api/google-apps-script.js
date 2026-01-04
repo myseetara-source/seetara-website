@@ -1,12 +1,20 @@
 /**
- * Seetara Meta Conversions API - Google Sheets Integration
+ * Seetara Meta Conversions API - ADVANCED VERSION
+ * Updated: January 2026
  * 
- * ⚠️ DEDUPLICATION FIX APPLIED ⚠️
+ * ⚠️ DEDUPLICATION + ADVANCED MATCHING ⚠️
  * 
  * This script does THREE things:
- * 1. RECEIVES orders from website (Web App)
+ * 1. RECEIVES orders from website (Web App) with Advanced Matching data
  * 2. SENDS Purchase events to Meta when status = "Converted"
  * 3. SENDS Refund events to Meta when status = "Cancelled"
+ * 
+ * NEW FEATURES (v2.0):
+ * - IP Address: Improves user matching
+ * - User Agent: Browser fingerprinting
+ * - fbp: Facebook Browser ID (_fbp cookie)
+ * - fbc: Facebook Click ID (_fbc cookie / fbclid URL param)
+ * → These improve Event Match Quality Score from ~3.4 to 7+!
  * 
  * HOW DEDUPLICATION WORKS:
  * - Website Browser Pixel fires: fbq('track', 'Purchase', {...}, { eventID: orderId })
@@ -20,6 +28,7 @@
  * 4. Set up time-based triggers:
  *    - sendNewPurchaseEvents (every 5 mins)
  *    - sendStatusUpdateEvents (every 5 mins)
+ * 5. Run addAdvancedMatchingColumns() once to add new columns O-R
  */
 
 // ============================================
@@ -39,7 +48,7 @@ const SHEETS = {
 };
 
 // Column indices (0-based) - Match with sheet headers
-// A: Order ID | B: Timestamp | C: Customer Name | D: Phone | E: Product | F: Color | G: Price | H: Order Type | I: Address | J: City | K: Delivery Zone | L: Status | M: Sent to Meta | N: Event ID
+// A: Order ID | B: Timestamp | C: Customer Name | D: Phone | E: Product | F: Color | G: Price | H: Order Type | I: Address | J: City | K: Delivery Zone | L: Status | M: Sent to Meta | N: Event ID | O: IP Address | P: User Agent | Q: fbp | R: fbc
 const COLUMNS = {
   ORDER_ID: 0,      // A
   TIMESTAMP: 1,     // B
@@ -48,13 +57,18 @@ const COLUMNS = {
   PRODUCT: 4,       // E
   COLOR: 5,         // F
   PRICE: 6,         // G
-  ORDER_TYPE: 7,    // H - NEW: Purchase or Inquiry
-  ADDRESS: 8,       // I - NEW: Full address
+  ORDER_TYPE: 7,    // H - Purchase or Inquiry
+  ADDRESS: 8,       // I - Full address
   CITY: 9,          // J
-  DELIVERY_ZONE: 10, // K - NEW: Inside Valley / Outside Valley
+  DELIVERY_ZONE: 10, // K - Inside Valley / Outside Valley
   STATUS: 11,       // L
   SENT_TO_META: 12, // M
   EVENT_ID: 13,     // N
+  // NEW: Advanced Matching Parameters (for better Event Match Quality)
+  IP_ADDRESS: 14,   // O - Client IP Address
+  USER_AGENT: 15,   // P - Client User Agent
+  FBP: 16,          // Q - Facebook Browser ID (_fbp cookie)
+  FBC: 17,          // R - Facebook Click ID (_fbc cookie or fbclid URL param)
 };
 
 // ============================================
@@ -78,7 +92,7 @@ function doPost(e) {
     // Get the Orders sheet
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.ORDERS);
     
-    // Add new row with order data - includes all fields
+    // Add new row with order data - includes all fields + Advanced Matching params
     // Status defaults to "Intake"
     sheet.appendRow([
       orderId,                              // A: Order ID (from website or generated)
@@ -94,7 +108,12 @@ function doPost(e) {
       data.deliveryLocation || data.deliveryZone || '', // K: Delivery Zone (inside/outside)
       'Intake',                             // L: Status (default = Intake)
       '',                                   // M: Sent to Meta (empty)
-      '',                                   // N: Event ID (empty)
+      data.eventId || data.orderId || orderId, // N: Event ID (from website for deduplication)
+      // NEW: Advanced Matching Parameters
+      data.ip || '',                        // O: Client IP Address
+      data.userAgent || '',                 // P: Client User Agent
+      data.fbp || '',                       // Q: Facebook Browser ID (_fbp cookie)
+      data.fbc || '',                       // R: Facebook Click ID (_fbc cookie/fbclid)
     ]);
     
     Logger.log(`✅ New order added: ${orderId}`);
@@ -143,7 +162,7 @@ function setupSheet() {
     ordersSheet = ss.insertSheet(SHEETS.ORDERS);
   }
   
-  // Set headers in Row 1 - Updated with all fields
+  // Set headers in Row 1 - Updated with all fields + Advanced Matching
   const headers = [
     'Order ID',      // A
     'Timestamp',     // B
@@ -152,13 +171,18 @@ function setupSheet() {
     'Product',       // E
     'Color',         // F
     'Price',         // G
-    'Order Type',    // H - NEW
-    'Address',       // I - NEW
+    'Order Type',    // H
+    'Address',       // I
     'City',          // J
-    'Delivery Zone', // K - NEW
+    'Delivery Zone', // K
     'Status',        // L
     'Sent to Meta',  // M
-    'Event ID'       // N
+    'Event ID',      // N
+    // NEW: Advanced Matching Columns (for better Event Match Quality!)
+    'IP Address',    // O
+    'User Agent',    // P
+    'fbp (Browser ID)', // Q
+    'fbc (Click ID)'    // R
   ];
   
   // Write headers
@@ -174,7 +198,7 @@ function setupSheet() {
   // Freeze header row
   ordersSheet.setFrozenRows(1);
   
-  // Set column widths - Updated for new columns
+  // Set column widths - Updated for new columns + Advanced Matching
   ordersSheet.setColumnWidth(1, 180);  // Order ID
   ordersSheet.setColumnWidth(2, 180);  // Timestamp
   ordersSheet.setColumnWidth(3, 150);  // Customer Name
@@ -189,9 +213,14 @@ function setupSheet() {
   ordersSheet.setColumnWidth(12, 100); // Status
   ordersSheet.setColumnWidth(13, 100); // Sent to Meta
   ordersSheet.setColumnWidth(14, 200); // Event ID
+  // NEW: Advanced Matching columns
+  ordersSheet.setColumnWidth(15, 130); // IP Address
+  ordersSheet.setColumnWidth(16, 200); // User Agent
+  ordersSheet.setColumnWidth(17, 180); // fbp (Browser ID)
+  ordersSheet.setColumnWidth(18, 200); // fbc (Click ID)
   
   // IMPORTANT: Clear ALL existing data validations first (to remove old validations from H column)
-  ordersSheet.getRange('A2:N1000').clearDataValidations();
+  ordersSheet.getRange('A2:R1000').clearDataValidations();
   
   // Add data validation for Status column ONLY (L column)
   const statusRule = SpreadsheetApp.newDataValidation()
@@ -249,15 +278,55 @@ function setupSheet() {
   Logger.log('✅ Sheet setup complete!');
   Logger.log('📋 Headers added: ' + headers.join(', '));
   Logger.log('🎨 Status dropdown added with colors: Intake (Yellow), Converted (Green), Cancelled (Red)');
+  Logger.log('🚀 Advanced Matching columns added: IP Address, User Agent, fbp, fbc');
   
   // Show success message
   SpreadsheetApp.getUi().alert(
     '✅ Setup Complete!',
     'Sheet is ready:\n\n' +
-    '• Headers added\n' +
+    '• Headers added (A to R)\n' +
     '• Status dropdown created (Intake, Converted, Cancelled)\n' +
-    '• Colors applied\n\n' +
+    '• Colors applied\n' +
+    '• NEW: Advanced Matching columns added (IP, User Agent, fbp, fbc)\n\n' +
     'Next: Deploy as Web App and set up Triggers!',
+    SpreadsheetApp.getUi().ButtonSet.OK
+  );
+}
+
+/**
+ * 🔧 ADD NEW COLUMNS TO EXISTING SHEET
+ * Run this ONCE if you already have data in the sheet
+ * This adds O, P, Q, R headers without affecting existing data
+ */
+function addAdvancedMatchingColumns() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.ORDERS);
+  
+  if (!sheet) {
+    SpreadsheetApp.getUi().alert('❌ Error', 'Orders sheet not found!', SpreadsheetApp.getUi().ButtonSet.OK);
+    return;
+  }
+  
+  // Set headers at O1:R1
+  const headers = ['IP Address', 'User Agent', 'fbp (Browser ID)', 'fbc (Click ID)'];
+  const range = sheet.getRange(1, 15, 1, 4); // O1:R1
+  range.setValues([headers]);
+  range.setFontWeight('bold').setBackground('#4285f4').setFontColor('#ffffff');
+  
+  // Set column widths
+  sheet.setColumnWidth(15, 130); // IP Address
+  sheet.setColumnWidth(16, 200); // User Agent
+  sheet.setColumnWidth(17, 180); // fbp
+  sheet.setColumnWidth(18, 200); // fbc
+  
+  Logger.log('✅ Advanced Matching columns added: IP Address, User Agent, fbp, fbc');
+  SpreadsheetApp.getUi().alert(
+    '✅ Columns Added!',
+    'New Advanced Matching columns added:\n\n' +
+    '• O: IP Address\n' +
+    '• P: User Agent\n' +
+    '• Q: fbp (Browser ID)\n' +
+    '• R: fbc (Click ID)\n\n' +
+    'These will improve your Event Match Quality Score!',
     SpreadsheetApp.getUi().ButtonSet.OK
   );
 }
@@ -298,9 +367,15 @@ function sendNewPurchaseEvents() {
         eventsSent++;
         // Mark as sent
         sheet.getRange(i + 1, COLUMNS.SENT_TO_META + 1).setValue('YES');
-        // Add event ID
-        const eventId = generateEventId(orderId);
-        sheet.getRange(i + 1, COLUMNS.EVENT_ID + 1).setValue(eventId);
+        
+        // ⚠️ IMPROVED: Only set Event ID if it's empty (don't overwrite website's ID)
+        // This preserves deduplication - website's ID takes priority
+        const existingEventId = row[COLUMNS.EVENT_ID];
+        if (!existingEventId || existingEventId === '') {
+          const eventId = generateEventId(orderId);
+          sheet.getRange(i + 1, COLUMNS.EVENT_ID + 1).setValue(eventId);
+          Logger.log(`⚠️ Event ID was empty, generated fallback: ${eventId}`);
+        }
       }
     }
   }
@@ -395,11 +470,23 @@ function sendPurchaseEvent(row, rowNumber) {
   const product = row[COLUMNS.PRODUCT];
   const city = row[COLUMNS.CITY];
   
-  // CRITICAL: This must match Browser Pixel's eventID exactly!
-  const eventId = generateEventId(orderId);
+  // NEW: Get Advanced Matching parameters from sheet
+  const clientIpAddress = row[COLUMNS.IP_ADDRESS];
+  const clientUserAgent = row[COLUMNS.USER_AGENT];
+  const fbp = row[COLUMNS.FBP];
+  const fbc = row[COLUMNS.FBC];
+  
+  // ⚠️ IMPROVED: Use Event ID from Column N (website's ID) for perfect deduplication
+  // Fallback to orderId if Column N is empty
+  let eventId = row[COLUMNS.EVENT_ID];
+  if (!eventId || eventId === '') {
+    eventId = generateEventId(orderId);
+  }
+  eventId = String(eventId).trim();
+  
   const eventTime = getUnixTimestamp(timestamp);
   
-  Logger.log(`Sending Purchase for Order: ${orderId}, EventID: ${eventId}`);
+  Logger.log(`Sending Purchase for Order: ${orderId}, EventID: ${eventId}, IP: ${clientIpAddress ? 'YES' : 'NO'}, fbp: ${fbp ? 'YES' : 'NO'}`);
   
   const payload = {
     data: [{
@@ -411,6 +498,11 @@ function sendPurchaseEvent(row, rowNumber) {
         ph: [hashPhone(phone)],
         ct: [hashString(city?.toLowerCase() || 'kathmandu')],
         country: [hashString('np')],
+        // NEW: Advanced Matching Parameters (improves Event Match Quality Score!)
+        client_ip_address: clientIpAddress || null,
+        client_user_agent: clientUserAgent || null,
+        fbp: fbp || null,
+        fbc: fbc || null,
       },
       custom_data: {
         currency: 'NPR',
@@ -458,6 +550,12 @@ function sendCancelledEvent(row, rowNumber) {
   const city = row[COLUMNS.CITY];
   const customerName = row[COLUMNS.CUSTOMER_NAME];
   
+  // NEW: Get Advanced Matching parameters from sheet
+  const clientIpAddress = row[COLUMNS.IP_ADDRESS];
+  const clientUserAgent = row[COLUMNS.USER_AGENT];
+  const fbp = row[COLUMNS.FBP];
+  const fbc = row[COLUMNS.FBC];
+  
   // Use consistent event ID format (no Date.now!)
   const eventId = `refund_${orderId}`;
   const eventTime = Math.floor(Date.now() / 1000);
@@ -474,6 +572,11 @@ function sendCancelledEvent(row, rowNumber) {
         ph: [hashPhone(phone)],
         ct: [hashString(city?.toLowerCase() || 'kathmandu')],
         country: [hashString('np')],
+        // NEW: Advanced Matching Parameters (for better matching on refunds too)
+        client_ip_address: clientIpAddress || null,
+        client_user_agent: clientUserAgent || null,
+        fbp: fbp || null,
+        fbc: fbc || null,
       },
       custom_data: {
         currency: 'NPR',

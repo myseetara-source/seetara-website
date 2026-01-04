@@ -98,8 +98,16 @@ const openWhatsApp = (formData: SuccessMessageProps['formData'], orderType: stri
 export default function SuccessMessage({ orderType, formData, onReset, productColor, grandTotal, orderId }: SuccessMessageProps) {
   const hasFiredPixel = useRef(false);
   
-  // Generate unique order ID (use passed orderId or generate one)
+  // CRITICAL: Use passed orderId for deduplication with CAPI
+  // Fallback is only for safety - should never trigger in normal flow
   const uniqueOrderId = orderId || `luna_${formData.phone}_${Date.now()}`;
+  
+  // Warn if fallback was used (indicates potential deduplication issue)
+  if (!orderId) {
+    console.warn('⚠️ DEDUPLICATION WARNING: orderId prop was not passed to SuccessMessage!');
+    console.warn('   Using fallback ID:', uniqueOrderId);
+    console.warn('   This may cause duplicate events in Facebook if CAPI uses a different ID.');
+  }
   
   // Check if this order was already fired (prevents duplicate on component re-render)
   const orderAlreadyFired = typeof window !== 'undefined' && sessionStorage.getItem(`pixel_fired_${uniqueOrderId}`) === 'true';

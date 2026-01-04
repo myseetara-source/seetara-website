@@ -240,10 +240,10 @@ export default function SW101LandingPage() {
         color: currentColor,
         price: currentProduct.price,
         deliveryCharge,
-        total: grandTotal,
+        grandTotal: grandTotal, // FIX: Was 'total', should be 'grandTotal' to match interface
         orderType,
-        productSKU: PRODUCT_SKU,
-        source: 'SW101',
+        sku: PRODUCT_SKU, // FIX: Was 'productSKU', should be 'sku' to match interface
+        deliveryLocation: deliveryLocation || undefined, // FIX: Added missing field
         orderId: orderId, // CRITICAL: For Meta Pixel deduplication
       };
 

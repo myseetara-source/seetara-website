@@ -1,5 +1,6 @@
 // Google Sheets Integration Service
 // This sends form data to Google Sheets via Google Apps Script Web App
+// Includes advanced Meta CAPI tracking parameters for improved Event Match Quality
 
 interface OrderData {
   sku?: string;
@@ -14,10 +15,128 @@ interface OrderData {
   deliveryCharge?: number;
   grandTotal?: number;
   orderId?: string; // For deduplication with Meta Pixel
+  // Advanced Meta CAPI tracking parameters
+  ip?: string;
+  userAgent?: string;
+  fbp?: string; // Browser ID from _fbp cookie
+  fbc?: string; // Click ID from _fbc cookie or URL fbclid
 }
+
+// ============================================
+// META CAPI TRACKING HELPER FUNCTIONS
+// ============================================
+
+/**
+ * Reads a cookie value by name
+ * Used to extract _fbp and _fbc cookies for Meta CAPI
+ */
+export const getCookie = (name: string): string => {
+  if (typeof document === 'undefined') return '';
+  
+  const cookies = document.cookie.split(';');
+  for (const cookie of cookies) {
+    const [cookieName, cookieValue] = cookie.trim().split('=');
+    if (cookieName === name) {
+      return decodeURIComponent(cookieValue || '');
+    }
+  }
+  return '';
+};
+
+/**
+ * Fetches the user's IP address from ipify API
+ * Returns empty string if fetch fails (non-blocking)
+ * Includes 2-second timeout to prevent order from hanging
+ */
+export const getIpAddress = async (): Promise<string> => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    
+    const response = await fetch('https://api.ipify.org?format=json', {
+      method: 'GET',
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) return '';
+    
+    const data = await response.json();
+    return data.ip || '';
+  } catch {
+    return '';
+  }
+};
+
+/**
+ * Gets the user agent string
+ */
+export const getUserAgent = (): string => {
+  if (typeof navigator === 'undefined') return '';
+  return navigator.userAgent || '';
+};
+
+/**
+ * Gets the Facebook Browser ID (_fbp cookie)
+ */
+export const getFbp = (): string => {
+  return getCookie('_fbp');
+};
+
+/**
+ * Gets the Facebook Click ID (_fbc cookie or constructed from URL fbclid)
+ * Includes sessionStorage fallback for page navigation
+ */
+export const getFbc = (): string => {
+  const fbcCookie = getCookie('_fbc');
+  if (fbcCookie) return fbcCookie;
+  
+  if (typeof window === 'undefined') return '';
+  
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const fbclid = urlParams.get('fbclid');
+    
+    if (fbclid) {
+      const fbcValue = `fb.1.${Date.now()}.${fbclid}`;
+      sessionStorage.setItem('fbc_fallback', fbcValue);
+      return fbcValue;
+    }
+    
+    // Fallback: check sessionStorage
+    return sessionStorage.getItem('fbc_fallback') || '';
+  } catch {
+    return '';
+  }
+};
+
+/**
+ * Gathers all Meta CAPI tracking parameters
+ */
+export const gatherMetaTrackingParams = async (): Promise<{
+  ip: string;
+  userAgent: string;
+  fbp: string;
+  fbc: string;
+}> => {
+  const [ip] = await Promise.all([getIpAddress()]);
+  
+  return {
+    ip,
+    userAgent: getUserAgent(),
+    fbp: getFbp(),
+    fbc: getFbc(),
+  };
+};
+
+// ============================================
+// GOOGLE SHEETS INTEGRATION
+// ============================================
 
 /**
  * Sends order/inquiry data to Google Sheets
+ * Includes advanced Meta CAPI tracking parameters
  */
 export const sendToGoogleSheet = async (data: OrderData, scriptUrl?: string): Promise<boolean> => {
   if (!scriptUrl) {
@@ -26,8 +145,12 @@ export const sendToGoogleSheet = async (data: OrderData, scriptUrl?: string): Pr
   }
 
   try {
-    // Generate orderId for deduplication (same format as FB Pixel eventId)
-    const orderId = data.orderId || `sb104_${data.phone}_${Date.now()}`;
+    // CRITICAL: orderId should be passed from the calling component for proper deduplication
+    let orderId = data.orderId;
+    if (!orderId) {
+      orderId = `sb104_${data.phone}_${Date.now()}`;
+      console.warn('⚠️ DEDUPLICATION WARNING: orderId was not passed! Generated fallback:', orderId);
+    }
     
     const sheetData = {
       orderId: orderId, // IMPORTANT: For Meta Pixel deduplication
@@ -43,6 +166,11 @@ export const sendToGoogleSheet = async (data: OrderData, scriptUrl?: string): Pr
       itemPrice: data.price,
       deliveryCharge: data.deliveryCharge || 0,
       grandTotal: data.grandTotal || data.price,
+      // Advanced Meta CAPI tracking parameters
+      ip: data.ip || '',
+      userAgent: data.userAgent || '',
+      fbp: data.fbp || '',
+      fbc: data.fbc || '',
     };
 
     console.log('Sending to Google Sheets:', sheetData);
@@ -71,6 +199,8 @@ export const sendToGoogleSheet = async (data: OrderData, scriptUrl?: string): Pr
         productSKU: data.sku || 'Seetara SB104 Multi-Functional Bag', color: data.color,
         customerName: data.name, phone: data.phone, city: data.city || 'N/A',
         grandTotal: data.grandTotal || data.price,
+        ip: data.ip || '', userAgent: data.userAgent || '',
+        fbp: data.fbp || '', fbc: data.fbc || '',
       };
       navigator.sendBeacon(scriptUrl, JSON.stringify(sheetData));
       console.log('Fallback: Data sent via sendBeacon');
@@ -173,6 +303,7 @@ Kripaya malai yo product ko barema thap janakari dinuhola. Thank you!`;
 
 /**
  * Handles the complete submission flow
+ * Automatically gathers Meta CAPI tracking parameters before submission
  */
 export const handleOrderSubmission = async (
   data: OrderData,
@@ -183,7 +314,24 @@ export const handleOrderSubmission = async (
   }
 ): Promise<void> => {
   if (config.googleScriptUrl) {
-    await sendToGoogleSheet(data, config.googleScriptUrl);
+    const trackingParams = await gatherMetaTrackingParams();
+    
+    const enrichedData: OrderData = {
+      ...data,
+      ip: trackingParams.ip,
+      userAgent: trackingParams.userAgent,
+      fbp: trackingParams.fbp,
+      fbc: trackingParams.fbc,
+    };
+    
+    console.log('Meta CAPI tracking params gathered:', {
+      ip: trackingParams.ip ? '✓' : '✗',
+      userAgent: trackingParams.userAgent ? '✓' : '✗',
+      fbp: trackingParams.fbp ? '✓' : '✗',
+      fbc: trackingParams.fbc ? '✓' : '✗',
+    });
+    
+    await sendToGoogleSheet(enrichedData, config.googleScriptUrl);
   }
 };
 

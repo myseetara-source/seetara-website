@@ -124,9 +124,16 @@ export default function SuccessMessage({ orderType, formData, onReset, productCo
       const eventId = uniqueOrderId;
       
       if (orderType === 'buy') {
+        // Ensure value is always a positive number
+        const purchaseValue = grandTotal || 0;
+        
+        if (purchaseValue <= 0) {
+          console.warn('⚠️ FB Pixel (SW101): Purchase value is 0 or invalid!', { grandTotal, purchaseValue });
+        }
+        
         // Fire Purchase with eventID = orderId (matches CAPI exactly)
         window.fbq('track', 'Purchase', {
-          value: grandTotal || 0,
+          value: purchaseValue,
           currency: 'NPR',
           content_name: `Seetara Smart Wallet - ${productColor || 'Unknown'}`,
           content_type: 'product',
@@ -134,7 +141,7 @@ export default function SuccessMessage({ orderType, formData, onReset, productCo
           order_id: uniqueOrderId,
         }, { eventID: eventId }); // EXACT same ID as CAPI sends
         
-        console.log('✅ FB Pixel Purchase fired (SW101) with eventID:', eventId);
+        console.log('✅ FB Pixel Purchase fired (SW101) with eventID:', eventId, 'Value:', purchaseValue);
         console.log('   (CAPI will send same event_id for deduplication)');
       } else {
         // For inquiries, fire Lead event

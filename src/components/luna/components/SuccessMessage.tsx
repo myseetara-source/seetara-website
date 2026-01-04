@@ -123,8 +123,15 @@ export default function SuccessMessage({ orderType, formData, onReset, productCo
       const eventId = uniqueOrderId;
       
       if (orderType === 'buy') {
+        // Ensure value is always a positive number
+        const purchaseValue = grandTotal || 0;
+        
+        if (purchaseValue <= 0) {
+          console.warn('⚠️ FB Pixel (Luna): Purchase value is 0 or invalid!', { grandTotal, purchaseValue });
+        }
+        
         window.fbq('track', 'Purchase', {
-          value: grandTotal || 0,
+          value: purchaseValue,
           currency: 'NPR',
           content_name: `Seetara Luna Bag - ${productColor || 'Unknown'}`,
           content_type: 'product',
@@ -132,7 +139,7 @@ export default function SuccessMessage({ orderType, formData, onReset, productCo
           order_id: uniqueOrderId,
         }, { eventID: eventId });
         
-        console.log('✅ FB Pixel Purchase fired (Luna) with eventID:', eventId);
+        console.log('✅ FB Pixel Purchase fired (Luna) with eventID:', eventId, 'Value:', purchaseValue);
       } else {
         window.fbq('track', 'Lead', {
           content_name: `Seetara Luna Bag - ${productColor || 'Unknown'}`,

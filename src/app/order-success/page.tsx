@@ -71,9 +71,16 @@ function OrderSuccessContent() {
       const eventId = orderId;
       
       if (orderType === 'buy') {
+        // Parse value safely - default to 0 if invalid, but log warning
+        const purchaseValue = parseFloat(grandTotal) || 0;
+        
+        if (purchaseValue <= 0) {
+          console.warn('⚠️ FB Pixel: Purchase value is 0 or invalid!', { grandTotal, purchaseValue });
+        }
+        
         // Fire Purchase with eventID = orderId (matches CAPI exactly)
         window.fbq('track', 'Purchase', {
-          value: parseFloat(grandTotal),
+          value: purchaseValue,
           currency: 'NPR',
           content_name: `${productName} - ${productColor}`,
           content_type: 'product',
@@ -81,7 +88,7 @@ function OrderSuccessContent() {
           order_id: orderId,
         }, { eventID: eventId }); // EXACT same ID as CAPI sends
         
-        console.log('✅ FB Pixel Purchase fired with eventID:', eventId);
+        console.log('✅ FB Pixel Purchase fired with eventID:', eventId, 'Value:', purchaseValue);
         console.log('   (CAPI will send same event_id for deduplication)');
       } else {
         // For inquiries, fire Lead event

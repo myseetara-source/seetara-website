@@ -11,8 +11,7 @@ import OrderForm from './components/OrderForm';
 import BottomBar from './components/BottomBar';
 import ProcessingOverlay from './components/ProcessingOverlay';
 import { productColors, products, PRODUCT_SKU, fakeNames, fakeCities } from './utils/constants';
-import { sendOrderNotifications } from './utils/smsService';
-import { handleOrderSubmission } from './utils/googleSheetsService';
+import { getCookie, getFbc, getFbp } from './utils/googleSheetsService';
 
 export default function SB106LandingPage() {
   const router = useRouter();
@@ -169,31 +168,50 @@ export default function SB106LandingPage() {
       // Step 0: Show verification for at least 700ms
       await new Promise(resolve => setTimeout(resolve, 700));
       
-      // Step 1: Sending SMS
+      // Step 1: Sending SMS via SECURE server-side API
       setProcessingStep(1);
 
-      // Get environment variables
-      const smsAuthToken = process.env.NEXT_PUBLIC_AAKASH_SMS_TOKEN;
-      const salesNumbers = process.env.NEXT_PUBLIC_SALES_NUMBERS?.split(',');
-      const googleScriptUrl = process.env.NEXT_PUBLIC_GOOGLE_SCRIPT_URL;
-      const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '9779802359033';
-      const messengerPageId = process.env.NEXT_PUBLIC_MESSENGER_PAGE_ID || '368155539704608';
-
-      // Send SMS notifications (show for at least 800ms)
-      if (smsAuthToken && salesNumbers) {
-        await minStepTime(sendOrderNotifications(orderData, smsAuthToken, salesNumbers), 800);
-      } else {
-        await new Promise(resolve => setTimeout(resolve, 800));
-      }
+      // Send SMS via secure API (token is NOT exposed to browser)
+      await minStepTime(fetch('/api/notifications/sms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerPhone: formData.phone,
+          customerName: formData.name,
+          orderType: orderType,
+          productName: PRODUCT_SKU,
+          productColor: currentColor,
+          grandTotal: grandTotal,
+        }),
+      }), 800);
       
-      // Step 2: Saving to Google Sheets
+      // Step 2: Saving to Google Sheets via SECURE server-side API
       setProcessingStep(2);
       
-      // Send to Google Sheets with orderId for Meta Pixel deduplication
-      await minStepTime(handleOrderSubmission({ ...orderData, orderId }, {
-        googleScriptUrl,
-        whatsappNumber,
-        messengerPageId
+      // Get Meta tracking params
+      const fbp = getFbp();
+      const fbc = getFbc();
+      
+      // Send to Google Sheets via secure API (script URL is NOT exposed to browser)
+      await minStepTime(fetch('/api/notifications/sheets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: orderId,
+          orderType: orderType,
+          productSKU: PRODUCT_SKU,
+          productColor: currentColor,
+          customerName: formData.name,
+          customerPhone: formData.phone,
+          city: formData.city,
+          address: formData.address,
+          deliveryLocation: deliveryLocation,
+          itemPrice: currentProduct.price,
+          deliveryCharge: deliveryCharge,
+          grandTotal: grandTotal,
+          fbp: fbp,
+          fbc: fbc,
+        }),
       }), 800);
       
       // Step 3: Redirecting

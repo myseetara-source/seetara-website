@@ -16,8 +16,8 @@ import SuccessMessage from './components/SuccessMessage';
 
 // Utils
 import { productColors, products, fakeNames, fakeCities, fakeTimes, PRODUCT_SKU } from './utils/constants';
-import { sendOrderNotifications } from './utils/smsService';
-import { handleOrderSubmission } from './utils/googleSheetsService';
+import { getFbp, getFbc } from './utils/googleSheetsService';
+// SMS and Sheets now use secure server-side APIs
 
 export default function SW101LandingPage() {
   // Product State
@@ -216,41 +216,46 @@ export default function SW101LandingPage() {
       await new Promise(resolve => setTimeout(resolve, 800));
       setProcessingStep(1);
 
-      // Step 2: Send SMS
-      const smsToken = process.env.NEXT_PUBLIC_AAKASH_SMS_TOKEN;
-      const salesNumbers = process.env.NEXT_PUBLIC_SALES_NUMBERS?.split(',') || [];
-      
-      await sendOrderNotifications({
-        name: formData.name,
-        phone: formData.phone,
-        color: currentColor,
-        orderType,
-        grandTotal: orderType === 'buy' ? grandTotal : undefined
-      }, smsToken, salesNumbers);
+      // Step 2: Send SMS via SECURE server-side API
+      await fetch('/api/notifications/sms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerPhone: formData.phone,
+          customerName: formData.name,
+          orderType: orderType,
+          productName: PRODUCT_SKU,
+          productColor: currentColor,
+          grandTotal: orderType === 'buy' ? grandTotal : undefined,
+        }),
+      });
       
       await new Promise(resolve => setTimeout(resolve, 600));
       setProcessingStep(2);
 
-      // Step 3: Save to Google Sheets with orderId for deduplication
-      const orderData = {
-        name: formData.name,
-        phone: formData.phone,
-        address: formData.address,
-        city: formData.city,
-        color: currentColor,
-        price: currentProduct.price,
-        deliveryCharge,
-        grandTotal: grandTotal, // FIX: Was 'total', should be 'grandTotal' to match interface
-        orderType,
-        sku: PRODUCT_SKU, // FIX: Was 'productSKU', should be 'sku' to match interface
-        deliveryLocation: deliveryLocation || undefined, // FIX: Added missing field
-        orderId: orderId, // CRITICAL: For Meta Pixel deduplication
-      };
-
-      await handleOrderSubmission(orderData, {
-        googleScriptUrl: process.env.NEXT_PUBLIC_GOOGLE_SCRIPT_URL,
-        whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER,
-        messengerPageId: process.env.NEXT_PUBLIC_MESSENGER_PAGE_ID
+      // Step 3: Save to Google Sheets via SECURE server-side API
+      const fbp = getFbp();
+      const fbc = getFbc();
+      
+      await fetch('/api/notifications/sheets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: orderId,
+          orderType: orderType,
+          productSKU: PRODUCT_SKU,
+          productColor: currentColor,
+          customerName: formData.name,
+          customerPhone: formData.phone,
+          city: formData.city,
+          address: formData.address,
+          deliveryLocation: deliveryLocation,
+          itemPrice: currentProduct.price,
+          deliveryCharge: deliveryCharge,
+          grandTotal: grandTotal,
+          fbp: fbp,
+          fbc: fbc,
+        }),
       });
       
       await new Promise(resolve => setTimeout(resolve, 600));

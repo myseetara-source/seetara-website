@@ -92,11 +92,15 @@ function doPost(e) {
     // Get the Orders sheet
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.ORDERS);
     
+    // ⚠️ FIX #1: Use ISO format for timestamp (more reliable parsing)
+    // toLocaleString can cause "Invalid Date" errors in getUnixTimestamp()
+    const timestamp = data.timestamp || new Date().toISOString();
+    
     // Add new row with order data - includes all fields + Advanced Matching params
     // Status defaults to "Intake"
     sheet.appendRow([
       orderId,                              // A: Order ID (from website or generated)
-      data.timestamp || new Date().toLocaleString('en-US', { timeZone: 'Asia/Kathmandu' }), // B: Timestamp
+      timestamp,                            // B: Timestamp (ISO format)
       data.customerName || data.name || '', // C: Customer Name
       data.phone || '',                     // D: Phone
       data.productSKU || data.product || 'Seetara Product', // E: Product
@@ -109,7 +113,7 @@ function doPost(e) {
       'Intake',                             // L: Status (default = Intake)
       '',                                   // M: Sent to Meta (empty)
       data.eventId || data.orderId || orderId, // N: Event ID (from website for deduplication)
-      // NEW: Advanced Matching Parameters
+      // NEW: Advanced Matching Parameters (REQUIRED for high Match Quality Score!)
       data.ip || '',                        // O: Client IP Address
       data.userAgent || '',                 // P: Client User Agent
       data.fbp || '',                       // Q: Facebook Browser ID (_fbp cookie)
@@ -350,6 +354,9 @@ function sendNewPurchaseEvents() {
   
   let eventsSent = 0;
   
+  // ⚠️ FIX #2: Collect updates for batch write (prevents "Time Limit Exceeded")
+  const updates = [];
+  
   // Skip header row
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
@@ -365,19 +372,36 @@ function sendNewPurchaseEvents() {
       const success = sendPurchaseEvent(row, i + 1);
       if (success) {
         eventsSent++;
-        // Mark as sent
-        sheet.getRange(i + 1, COLUMNS.SENT_TO_META + 1).setValue('YES');
         
-        // ⚠️ IMPROVED: Only set Event ID if it's empty (don't overwrite website's ID)
-        // This preserves deduplication - website's ID takes priority
+        // Collect update for batch write
         const existingEventId = row[COLUMNS.EVENT_ID];
+        let eventIdToSet = existingEventId;
+        
         if (!existingEventId || existingEventId === '') {
-          const eventId = generateEventId(orderId);
-          sheet.getRange(i + 1, COLUMNS.EVENT_ID + 1).setValue(eventId);
-          Logger.log(`⚠️ Event ID was empty, generated fallback: ${eventId}`);
+          eventIdToSet = generateEventId(orderId);
+          Logger.log(`⚠️ Event ID was empty, generated fallback: ${eventIdToSet}`);
         }
+        
+        updates.push({
+          row: i + 1,
+          sentToMeta: 'YES',
+          eventId: eventIdToSet
+        });
       }
     }
+  }
+  
+  // ⚠️ BATCH UPDATE: Write all updates at once (MUCH faster!)
+  updates.forEach(update => {
+    sheet.getRange(update.row, COLUMNS.SENT_TO_META + 1).setValue(update.sentToMeta);
+    if (update.eventId) {
+      sheet.getRange(update.row, COLUMNS.EVENT_ID + 1).setValue(update.eventId);
+    }
+  });
+  
+  // Flush changes to ensure they're saved
+  if (updates.length > 0) {
+    SpreadsheetApp.flush();
   }
   
   Logger.log(`Sent ${eventsSent} Purchase events to Meta`);
@@ -403,6 +427,10 @@ function sendStatusUpdateEvents() {
   
   let eventsSent = 0;
   
+  // ⚠️ FIX #2: Collect updates for batch write (prevents "Time Limit Exceeded")
+  const updates = [];
+  const sentEventKeys = [];
+  
   // Skip header row
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
@@ -427,20 +455,34 @@ function sendStatusUpdateEvents() {
     
     if (success) {
       eventsSent++;
-      markEventAsSent(sentEventsSheet, statusEventKey, status);
+      sentEventKeys.push({ key: statusEventKey, type: status });
       
-      // FIX: Also update the main Orders sheet to show event was sent
-      // Mark as "REFUND" to distinguish from Purchase events
-      if (alreadySentToMeta === 'YES') {
-        // Purchase was already sent, now adding Refund
-        sheet.getRange(i + 1, COLUMNS.SENT_TO_META + 1).setValue('YES+REFUND');
-      } else {
-        sheet.getRange(i + 1, COLUMNS.SENT_TO_META + 1).setValue('REFUND');
-      }
-      sheet.getRange(i + 1, COLUMNS.EVENT_ID + 1).setValue(eventId);
+      // Collect update for batch write
+      const sentToMetaValue = alreadySentToMeta === 'YES' ? 'YES+REFUND' : 'REFUND';
+      updates.push({
+        row: i + 1,
+        sentToMeta: sentToMetaValue,
+        eventId: eventId
+      });
       
       Logger.log(`✅ Refund event sent for cancelled order: ${orderId}`);
     }
+  }
+  
+  // ⚠️ BATCH UPDATE: Write all updates at once (MUCH faster!)
+  updates.forEach(update => {
+    sheet.getRange(update.row, COLUMNS.SENT_TO_META + 1).setValue(update.sentToMeta);
+    sheet.getRange(update.row, COLUMNS.EVENT_ID + 1).setValue(update.eventId);
+  });
+  
+  // Mark all events as sent in batch
+  sentEventKeys.forEach(event => {
+    markEventAsSent(sentEventsSheet, event.key, event.type);
+  });
+  
+  // Flush changes to ensure they're saved
+  if (updates.length > 0) {
+    SpreadsheetApp.flush();
   }
   
   Logger.log(`Sent ${eventsSent} Cancelled/Refund events to Meta`);
@@ -488,6 +530,9 @@ function sendPurchaseEvent(row, rowNumber) {
   
   Logger.log(`Sending Purchase for Order: ${orderId}, EventID: ${eventId}, IP: ${clientIpAddress ? 'YES' : 'NO'}, fbp: ${fbp ? 'YES' : 'NO'}`);
   
+  // ⚠️ FIX: Convert city to string first (Google Sheets may return number/date)
+  const cityString = String(city || 'kathmandu').toLowerCase().trim();
+  
   const payload = {
     data: [{
       event_name: 'Purchase',
@@ -496,7 +541,7 @@ function sendPurchaseEvent(row, rowNumber) {
       action_source: 'website',
       user_data: {
         ph: [hashPhone(phone)],
-        ct: [hashString(city?.toLowerCase() || 'kathmandu')],
+        ct: [hashString(cityString)],
         country: [hashString('np')],
         // NEW: Advanced Matching Parameters (improves Event Match Quality Score!)
         client_ip_address: clientIpAddress || null,
@@ -507,7 +552,7 @@ function sendPurchaseEvent(row, rowNumber) {
       custom_data: {
         currency: 'NPR',
         value: parseFloat(price) || 0,
-        content_name: product,
+        content_name: String(product || 'Seetara Product'),
         content_type: 'product',
         order_id: String(orderId),
       },
@@ -562,6 +607,9 @@ function sendCancelledEvent(row, rowNumber) {
   
   Logger.log(`🔴 Sending Refund event for cancelled order: ${orderId}, Customer: ${customerName}, Amount: ${price}`);
   
+  // ⚠️ FIX: Convert city to string first (Google Sheets may return number/date)
+  const cityString = String(city || 'kathmandu').toLowerCase().trim();
+  
   const payload = {
     data: [{
       event_name: 'Refund', // Standard event for cancelled purchases
@@ -570,7 +618,7 @@ function sendCancelledEvent(row, rowNumber) {
       action_source: 'system_generated',
       user_data: {
         ph: [hashPhone(phone)],
-        ct: [hashString(city?.toLowerCase() || 'kathmandu')],
+        ct: [hashString(cityString)],
         country: [hashString('np')],
         // NEW: Advanced Matching Parameters (for better matching on refunds too)
         client_ip_address: clientIpAddress || null,
@@ -581,7 +629,7 @@ function sendCancelledEvent(row, rowNumber) {
       custom_data: {
         currency: 'NPR',
         value: parseFloat(price) || 0, // Original order value
-        content_name: product || 'Seetara Product',
+        content_name: String(product || 'Seetara Product'),
         content_type: 'product',
         order_id: String(orderId),
         refund_reason: 'order_cancelled',

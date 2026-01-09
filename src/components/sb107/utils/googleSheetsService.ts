@@ -137,6 +137,10 @@ export const gatherMetaTrackingParams = async (): Promise<{
 /**
  * Sends order/inquiry data to Google Sheets
  * Includes advanced Meta CAPI tracking parameters
+ * 
+ * ⚠️ CRITICAL FOR DEDUPLICATION:
+ * The orderId sent here MUST be stored in BOTH Column A (Order ID) AND Column N (Event ID)
+ * This same orderId is used by Browser Pixel's eventID for deduplication
  */
 export const sendToGoogleSheet = async (data: OrderData, scriptUrl?: string): Promise<boolean> => {
   if (!scriptUrl) {
@@ -152,8 +156,11 @@ export const sendToGoogleSheet = async (data: OrderData, scriptUrl?: string): Pr
       console.warn('⚠️ DEDUPLICATION WARNING: orderId was not passed! Generated fallback:', orderId);
     }
     
+    // ⚠️ FIX: Send BOTH orderId AND eventId explicitly
+    // This ensures Column N (Event ID) gets the correct value for CAPI deduplication
     const sheetData = {
-      orderId: orderId, // IMPORTANT: For Meta Pixel deduplication
+      orderId: orderId, // For Column A (Order ID)
+      eventId: orderId, // ⚠️ Explicitly send for Column N (Event ID) - MUST match browser pixel's eventID!
       timestamp: new Date().toLocaleString('en-US', { timeZone: 'Asia/Kathmandu' }),
       orderType: data.orderType === 'buy' ? 'Purchase' : 'Inquiry',
       productSKU: data.sku || 'Seetara SB107 Product',
@@ -172,6 +179,8 @@ export const sendToGoogleSheet = async (data: OrderData, scriptUrl?: string): Pr
       fbp: data.fbp || '',
       fbc: data.fbc || '',
     };
+    
+    console.log('📤 SB107 Order - EventID for deduplication:', orderId);
 
     console.log('Sending to Google Sheets:', sheetData);
 
@@ -195,7 +204,9 @@ export const sendToGoogleSheet = async (data: OrderData, scriptUrl?: string): Pr
     try {
       const orderId = data.orderId || `sb107_${data.phone}_${Date.now()}`;
       const sheetData = {
-        orderId, timestamp: new Date().toLocaleString('en-US', { timeZone: 'Asia/Kathmandu' }),
+        orderId, 
+        eventId: orderId, // ⚠️ FIX: Include eventId for deduplication
+        timestamp: new Date().toLocaleString('en-US', { timeZone: 'Asia/Kathmandu' }),
         orderType: data.orderType === 'buy' ? 'Purchase' : 'Inquiry',
         productSKU: data.sku || 'Seetara SB107 Product', color: data.color,
         customerName: data.name, phone: data.phone, city: data.city || 'N/A',
@@ -204,7 +215,7 @@ export const sendToGoogleSheet = async (data: OrderData, scriptUrl?: string): Pr
         fbp: data.fbp || '', fbc: data.fbc || '',
       };
       navigator.sendBeacon(scriptUrl, JSON.stringify(sheetData));
-      console.log('Fallback: Data sent via sendBeacon');
+      console.log('Fallback: Data sent via sendBeacon with eventId:', orderId);
       return true;
     } catch (beaconError) {
       console.error('Beacon also failed:', beaconError);

@@ -1,23 +1,32 @@
 # 🔧 Seetara Meta Conversions API - Complete Setup Guide
 
-## 🔴 तपाईंको Problems (Identified):
-1. **Duplicate Purchase Events** - Meta ले 12 देखाउँदा actual 7 मात्र हो
-2. **No Deduplication** - `event_id` नभएकोले duplicate count हुँदैथ्यो
-3. **Poor Algorithm** - Wrong data ले targeting बिग्रिएको
-4. **No Quality Feedback** - Cancel/Delivered status Meta लाई जाँदैनथ्यो
+## 🔴 Duplicate Purchase Problem - SOLVED!
 
-## ✅ Solutions Implemented:
+**Problem:** Meta Ads Manager showing 6 purchases when actual orders are only 3.
 
-### 1. Website Pixel Fixed (event_id added)
-All SuccessMessage components now include `eventID` for proper deduplication:
+**Root Cause:** Both Browser Pixel AND CAPI were sending Purchase events. Even with `event_id` deduplication, Facebook sometimes counted them twice.
+
+**Solution:**
+- ✅ Browser Pixel = ONLY source of Purchase events (fires once when order placed)
+- ✅ CAPI = ONLY for Refund events (when orders are cancelled)
+- ✅ Result: Accurate purchase counts!
+
+---
+
+## ✅ Current Design:
+
+### Website Pixel (Browser-side):
+All pages fire Purchase with proper `eventID` for deduplication:
+- ✅ Luna (Luna Bag)
 - ✅ SB107 (Golden Chain Bag)
 - ✅ SB106 (Chain Bag)
 - ✅ SB104 (Multi-Functional Bag)
 - ✅ SW101 (Smart Wallet)
 - ✅ /order-success page
 
-### 2. Google Sheets Conversions API Created
-Server-side events to complement browser pixel.
+### CAPI (Server-side via Google Apps Script):
+- ❌ NO Purchase events (Browser handles this)
+- ✅ Refund events when orders are cancelled
 
 ---
 
@@ -25,165 +34,134 @@ Server-side events to complement browser pixel.
 
 ### STEP 1: Deploy Website Updates
 ```bash
-# In your terminal, run:
 cd /Users/dhirajthakur/Seetara/seetara-website
 npm run build
-# Deploy to your hosting (Vercel/etc)
+# Deploy to Vercel
 ```
 
-### STEP 2: Create Google Sheets Tracker
+### STEP 2: Update Google Apps Script
 
-1. **Go to**: https://sheets.google.com
-2. **Create New Spreadsheet**: Name it `Seetara Meta Events Tracker`
-3. **Create Sheet 1** named `Orders` with these headers:
-
-| A | B | C | D | E | F | G | H | I | J | K |
-|---|---|---|---|---|---|---|---|---|---|---|
-| Order ID | Timestamp | Customer Name | Phone | Product | Color | Price | Status | City | Sent to Meta | Event ID |
-
-4. **Status values to use** (तपाईंको existing system अनुसार):
-   - `Intake` - नयाँ order आयो (new lead)
-   - `Converted` - Order successful भयो ✅ (यो status मा Purchase event जान्छ Meta मा!)
-   - `Cancelled` - Order cancel भयो ❌ (यो status मा negative signal जान्छ Meta मा)
-
-### STEP 3: Add Google Apps Script
-
-1. **In your Google Sheet**: Go to **Extensions > Apps Script**
-2. **Delete all existing code**
+1. **Open your Google Sheet**: Go to **Extensions > Apps Script**
+2. **Delete ALL existing code**
 3. **Copy the entire code from**: `google-apps-script.js`
 4. **Paste it** and click **Save** (Ctrl+S)
-5. **Name the project**: "Seetara Meta Events"
 
-### STEP 4: Set Up Automatic Triggers
+### STEP 3: ⚠️ DELETE OLD TRIGGERS (CRITICAL!)
+
+This is the most important step to fix duplicates:
 
 1. In Apps Script, click the **clock icon** (Triggers) on left sidebar
-2. Click **+ Add Trigger**
-3. **Set up Trigger 1**:
-   - Choose function: `sendNewPurchaseEvents`
-   - Event source: Time-driven
-   - Type: Minutes timer
-   - Interval: Every 5 minutes
-   - Click Save
+2. **LOOK FOR** any trigger with function `sendNewPurchaseEvents`
+3. **DELETE IT** by clicking the 3-dot menu → Delete
+4. This trigger was causing duplicate Purchase events!
 
-4. **Set up Trigger 2**:
+### STEP 4: Set Up Single Trigger
+
+1. In Apps Script, click **+ Add Trigger**
+2. **Set up ONLY this trigger:**
    - Choose function: `sendStatusUpdateEvents`
    - Event source: Time-driven
    - Type: Minutes timer
    - Interval: Every 5 minutes
    - Click Save
 
-### STEP 5: Test the Connection
+⚠️ **DO NOT add trigger for `sendNewPurchaseEvents`!**
+This function is intentionally disabled to prevent duplicates.
 
-1. In Apps Script, select function `testConnection` from dropdown
-2. Click **Run** ▶️
-3. Check **View > Logs** for success message
-4. Go to Meta Events Manager > Test Events to verify
+### STEP 5: Verify Setup
 
-### STEP 6: Import Existing Orders (Optional)
-
-If you want to import from your existing sheet:
-1. Update `IMPORT_SHEET_URL` in the script with your sheet URL
-2. Run the `importFromExternalSheet` function once
+1. Run `testConnection` manually to test API connection
+2. Check **View > Logs** for success message
 
 ---
 
-## 📊 How It Works
+## 📊 How It Works Now
 
-### Purchase Flow:
+### When Customer Places Order:
 ```
-Customer Orders → Website fires FB Pixel (with eventID)
-                → Order saved to Google Sheets
-                → Google Script sends to Conversions API (with same eventID)
-                → Meta deduplicates using eventID
-                → Only 1 purchase counted! ✅
+Customer clicks "Order" → SuccessMessage shows
+                        → Browser Pixel fires Purchase (eventID = orderId)
+                        → Order saved to Google Sheet (status = Intake)
+                        → ✅ ONLY 1 Purchase event to Meta!
 ```
 
-### Quality Feedback Flow:
+### When You Mark Order as Converted:
 ```
-तपाईं Sheet मा Status update गर्नुहुन्छ:
+You change status: Intake → Converted
+                 → Script marks "Sent to Meta" = "PIXEL"
+                 → ❌ NO CAPI event sent (Browser already tracked!)
+```
 
-"Intake" → "Converted" (successful)
-          → Script sends Purchase event to Meta ✅
-          → Meta learns: यो type को lead = GOOD
-          
-"Intake" → "Cancelled" (failed)
-          → Script sends negative signal to Meta ❌
-          → Meta learns: यो type को lead = BAD
-          → Future ads will avoid similar people!
+### When Order is Cancelled:
+```
+You change status: any → Cancelled
+                 → Script sends Refund event to Meta
+                 → Meta learns: this lead cancelled
+                 → Ad algorithm avoids similar users!
 ```
 
 ---
 
-## 🔄 Daily Workflow (तपाईंको Status अनुसार)
+## 🔄 Daily Workflow
 
-### 1️⃣ जब नयाँ Order आउँछ:
-1. Order automatically tracked via website
-2. Sheet मा status = `Intake` हुन्छ (नयाँ order आयो)
-3. ⚠️ यस stage मा Meta लाई कुनै event जाँदैन
+### 1️⃣ नयाँ Order आउँछ:
+1. Order automatically saved to Sheet (status = `Intake`)
+2. Browser Pixel already fired Purchase ✅
+3. No action needed - just wait for confirmation
 
-### 2️⃣ Order Complete/Successful हुँदा:
-1. Sheet मा Status change गर्नुहोस्: `Intake` → `Converted`
-2. ✅ Script automatically **Purchase event** Meta लाई पठाउँछ
-3. Meta ले यो customer type राम्रो हो भन्ने बुझ्छ
+### 2️⃣ Order Successful हुँदा:
+1. Status change: `Intake` → `Converted`
+2. Script marks as "PIXEL" (already tracked by browser)
+3. No duplicate event sent!
 
 ### 3️⃣ Order Cancel हुँदा:
-1. Status change गर्नुहोस्: any → `Cancelled`
-2. ❌ Script automatically **negative signal** Meta लाई पठाउँछ
-3. Meta ले यो customer type खराब हो भन्ने बुझ्छ
-4. Future मा यस्तै मान्छेहरुलाई ads देखाउँदैन!
-
----
-
-## ⏰ Expected Timeline
-
-| Day | What Happens |
-|-----|--------------|
-| Day 1-2 | Events start showing in Events Manager |
-| Day 3-5 | Meta begins learning from new data |
-| Day 7-14 | Ad performance should start improving |
-| Day 14-30 | Full optimization with quality leads |
+1. Status change: any → `Cancelled`
+2. Script sends Refund event to Meta
+3. Meta learns this was a bad quality lead
+4. Future ads avoid similar users!
 
 ---
 
 ## 🆘 Troubleshooting
 
-### Events not showing in Meta:
-- Check Access Token is valid (tokens expire!)
-- Verify Pixel ID is correct
-- Check Apps Script logs for errors
+### Still seeing duplicate purchases?
+1. **Check Triggers** - Make sure `sendNewPurchaseEvents` trigger is DELETED
+2. **Update Script** - Make sure you have the latest code
+3. **Clear old data** - Duplicates from before fix will still show
 
-### Duplicate events still showing:
-- Ensure website is deployed with new eventID code
-- Check that eventID format matches between browser and server
+### Refund events not working?
+1. **Check Status** - Order must be marked as "Cancelled"
+2. **Check Trigger** - `sendStatusUpdateEvents` must be running
+3. **Check Logs** - View > Logs in Apps Script
 
-### Script errors:
-- Go to Apps Script > Executions to see error details
-- Check Google Sheet column headers match expected format
+### How to verify fix is working?
+1. Place a test order
+2. Check Events Manager → should show only 1 Purchase
+3. If you cancel, you should see 1 Refund event
 
 ---
 
 ## 📞 Important Info
 
 - **Pixel ID**: 2046274132882959
-- **API Version**: v24.0
+- **API Version**: v20.0
 - **Events sent**:
-  - `Purchase` → जब status = `Converted` (successful order)
-  - `Lead` (quality_score: 0) → जब status = `Cancelled` (failed order)
+  - `Purchase` → Browser Pixel only (when order placed)
+  - `Refund` → CAPI only (when status = `Cancelled`)
 
 ---
 
-## 🎯 Quick Actions Checklist
+## 🎯 Quick Checklist
 
-- [ ] Deploy website updates
-- [ ] Create new Google Sheet
-- [ ] Add Apps Script code
-- [ ] Set up 2 triggers
-- [ ] Run test connection
-- [ ] Add first order and verify in Meta Events Manager
-- [ ] Set up daily workflow for status updates
+- [ ] Update website code and deploy
+- [ ] Update Google Apps Script code
+- [ ] **DELETE `sendNewPurchaseEvents` trigger**
+- [ ] Set up ONLY `sendStatusUpdateEvents` trigger
+- [ ] Test with new order
+- [ ] Verify only 1 purchase shows in Events Manager
 
 ---
 
 **Created for Seetara Nepal**
-**Date**: December 30, 2025
+**Updated**: January 2026 (Duplicate fix)
 

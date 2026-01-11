@@ -1,33 +1,36 @@
 /**
- * Seetara Meta Conversions API - ADVANCED VERSION
+ * Seetara Meta Conversions API - v3.0 (FIXED)
  * Updated: January 2026
  * 
- * ⚠️ DEDUPLICATION + ADVANCED MATCHING ⚠️
+ * ⚠️ IMPORTANT: PURCHASE EVENTS ARE BROWSER-ONLY! ⚠️
  * 
- * This script does THREE things:
+ * This script does TWO things:
  * 1. RECEIVES orders from website (Web App) with Advanced Matching data
- * 2. SENDS Purchase events to Meta when status = "Converted"
- * 3. SENDS Refund events to Meta when status = "Cancelled"
+ * 2. SENDS Refund events to Meta when status = "Cancelled"
  * 
- * NEW FEATURES (v2.0):
+ * ⚠️ WHY NO CAPI PURCHASE EVENTS?
+ * Previously, both Browser Pixel AND CAPI sent Purchase events with deduplication.
+ * However, deduplication was unreliable, causing 2x purchase counts in Ads Manager!
+ * 
+ * CURRENT DESIGN:
+ * - Browser Pixel fires Purchase immediately when order is placed (ONLY source of Purchase events)
+ * - CAPI fires Refund when order is cancelled (negative signal for optimization)
+ * - This prevents duplicate counting!
+ * 
+ * FEATURES:
  * - IP Address: Improves user matching
  * - User Agent: Browser fingerprinting
  * - fbp: Facebook Browser ID (_fbp cookie)
  * - fbc: Facebook Click ID (_fbc cookie / fbclid URL param)
- * → These improve Event Match Quality Score from ~3.4 to 7+!
- * 
- * HOW DEDUPLICATION WORKS:
- * - Website Browser Pixel fires: fbq('track', 'Purchase', {...}, { eventID: orderId })
- * - This script (CAPI) fires:    event_id: orderId (EXACT SAME!)
- * - Facebook sees both with same ID → counts as 1 purchase (not 2!)
+ * → These improve Event Match Quality Score!
  * 
  * SETUP:
  * 1. Update PIXEL_ID and ACCESS_TOKEN below
  * 2. Deploy as Web App (Execute as: Me, Access: Anyone)
- * 3. Copy Web App URL to website's NEXT_PUBLIC_GOOGLE_SCRIPT_URL
- * 4. Set up time-based triggers:
- *    - sendNewPurchaseEvents (every 5 mins)
- *    - sendStatusUpdateEvents (every 5 mins)
+ * 3. Copy Web App URL to website's GOOGLE_SCRIPT_URL env variable
+ * 4. Set up ONE time-based trigger:
+ *    - sendStatusUpdateEvents (every 5 mins) ← FOR REFUND EVENTS ONLY
+ *    - ❌ DO NOT set up sendNewPurchaseEvents (causes duplicates!)
  * 5. Run addAdvancedMatchingColumns() once to add new columns O-R
  */
 
@@ -340,46 +343,55 @@ function addAdvancedMatchingColumns() {
 // ============================================
 
 /**
- * Send Purchase events for Converted orders
- * Run this every 5 minutes via trigger
+ * ⚠️ DEPRECATED - DO NOT USE! ⚠️
  * 
- * Status Flow:
- * - Intake: नयाँ order आयो (don't send Purchase yet)
- * - Converted: Order successful भयो (SEND PURCHASE EVENT!)
- * - Cancelled: Order cancel भयो (send negative signal)
+ * This function caused DUPLICATE PURCHASE EVENTS!
+ * 
+ * Problem:
+ * - Browser Pixel fires Purchase immediately when order is placed
+ * - This function fired Purchase AGAIN when status became "Converted"
+ * - Deduplication was unreliable → Facebook counted 2x purchases!
+ * 
+ * Solution:
+ * - Browser Pixel handles all Purchase events (fires once when order is placed)
+ * - CAPI only handles Refund events (via sendStatusUpdateEvents)
+ * 
+ * DO NOT set up a trigger for this function!
+ * Use sendStatusUpdateEvents for Refund tracking only.
  */
 function sendNewPurchaseEvents() {
+  // ⚠️ DISABLED TO PREVENT DUPLICATE EVENTS
+  Logger.log('⚠️ sendNewPurchaseEvents is DISABLED to prevent duplicate Purchase events!');
+  Logger.log('   Browser Pixel handles all Purchase events.');
+  Logger.log('   Use sendStatusUpdateEvents for Refund tracking only.');
+  return;
+  
+  // OLD CODE BELOW (kept for reference, never executed)
+  /*
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.ORDERS);
   const data = sheet.getDataRange().getValues();
   
   let eventsSent = 0;
-  
-  // ⚠️ FIX #2: Collect updates for batch write (prevents "Time Limit Exceeded")
   const updates = [];
   
-  // Skip header row
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
     const orderId = row[COLUMNS.ORDER_ID];
     const sentToMeta = row[COLUMNS.SENT_TO_META];
     const status = String(row[COLUMNS.STATUS]).trim().toLowerCase();
     
-    // Skip if already sent or no order ID
     if (!orderId || sentToMeta === 'YES') continue;
     
-    // Only send Purchase event when status is "Converted" (order successful)
     if (status === 'converted') {
       const success = sendPurchaseEvent(row, i + 1);
       if (success) {
         eventsSent++;
         
-        // Collect update for batch write
         const existingEventId = row[COLUMNS.EVENT_ID];
         let eventIdToSet = existingEventId;
         
         if (!existingEventId || existingEventId === '') {
           eventIdToSet = generateEventId(orderId);
-          Logger.log(`⚠️ Event ID was empty, generated fallback: ${eventIdToSet}`);
         }
         
         updates.push({
@@ -391,7 +403,6 @@ function sendNewPurchaseEvents() {
     }
   }
   
-  // ⚠️ BATCH UPDATE: Write all updates at once (MUCH faster!)
   updates.forEach(update => {
     sheet.getRange(update.row, COLUMNS.SENT_TO_META + 1).setValue(update.sentToMeta);
     if (update.eventId) {
@@ -399,35 +410,40 @@ function sendNewPurchaseEvents() {
     }
   });
   
-  // Flush changes to ensure they're saved
   if (updates.length > 0) {
     SpreadsheetApp.flush();
   }
   
   Logger.log(`Sent ${eventsSent} Purchase events to Meta`);
+  */
 }
 
 /**
- * Send Cancelled events to Meta
- * Run this every 5 minutes via trigger
+ * ✅ MAIN TRIGGER FUNCTION - Run every 5 minutes!
+ * 
+ * Send Refund events to Meta for cancelled orders
  * 
  * This sends negative signal to Meta when order is cancelled
  * so algorithm learns which leads are bad quality
  * 
  * ⚠️ IMPORTANT FOR COD ORDERS:
  * - Browser Pixel fires Purchase immediately when order is placed
- * - If order is later cancelled, we send Refund event to Meta
+ * - If order is later cancelled, this function sends Refund event to Meta
  * - This tells Meta: "This purchase was cancelled - low quality lead"
  * - Meta algorithm learns to avoid showing ads to similar users
+ * 
+ * SETUP: Set up a time-based trigger to run this every 5 minutes
+ * DO NOT set up triggers for sendNewPurchaseEvents (causes duplicates!)
  */
 function sendStatusUpdateEvents() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEETS.ORDERS);
   const sentEventsSheet = getOrCreateSentEventsSheet();
   const data = sheet.getDataRange().getValues();
   
-  let eventsSent = 0;
+  let refundEventsSent = 0;
+  let pixelMarked = 0;
   
-  // ⚠️ FIX #2: Collect updates for batch write (prevents "Time Limit Exceeded")
+  // Collect updates for batch write (prevents "Time Limit Exceeded")
   const updates = [];
   const sentEventKeys = [];
   
@@ -436,7 +452,7 @@ function sendStatusUpdateEvents() {
     const row = data[i];
     const orderId = row[COLUMNS.ORDER_ID];
     const status = String(row[COLUMNS.STATUS]).trim().toLowerCase();
-    const alreadySentToMeta = row[COLUMNS.SENT_TO_META];
+    const alreadySentToMeta = String(row[COLUMNS.SENT_TO_META]).trim();
     
     if (!orderId) continue;
     
@@ -444,35 +460,48 @@ function sendStatusUpdateEvents() {
     const statusEventKey = `${orderId}_${status}`;
     if (isEventAlreadySent(sentEventsSheet, statusEventKey)) continue;
     
-    let success = false;
-    let eventId = '';
-    
-    // Only send event for Cancelled orders (negative signal to Meta)
+    // Handle CANCELLED orders - send Refund event
     if (status === 'cancelled') {
-      success = sendCancelledEvent(row, i + 1);
-      eventId = `refund_${orderId}`;
+      const success = sendCancelledEvent(row, i + 1);
+      
+      if (success) {
+        refundEventsSent++;
+        sentEventKeys.push({ key: statusEventKey, type: 'cancelled' });
+        
+        // Mark as REFUND (or PIXEL+REFUND if was previously marked as PIXEL)
+        const sentToMetaValue = alreadySentToMeta === 'PIXEL' ? 'PIXEL+REFUND' : 'REFUND';
+        updates.push({
+          row: i + 1,
+          sentToMeta: sentToMetaValue,
+          eventId: `refund_${orderId}`
+        });
+        
+        Logger.log(`✅ Refund event sent for cancelled order: ${orderId}`);
+      }
     }
     
-    if (success) {
-      eventsSent++;
-      sentEventKeys.push({ key: statusEventKey, type: status });
+    // Handle CONVERTED orders - mark as PIXEL (Browser Pixel already fired Purchase)
+    // This is just for tracking - no CAPI event is sent (prevents duplicates!)
+    if (status === 'converted' && alreadySentToMeta !== 'PIXEL' && alreadySentToMeta !== 'YES') {
+      pixelMarked++;
+      sentEventKeys.push({ key: statusEventKey, type: 'converted_pixel' });
       
-      // Collect update for batch write
-      const sentToMetaValue = alreadySentToMeta === 'YES' ? 'YES+REFUND' : 'REFUND';
       updates.push({
         row: i + 1,
-        sentToMeta: sentToMetaValue,
-        eventId: eventId
+        sentToMeta: 'PIXEL',
+        eventId: null // Don't overwrite existing Event ID
       });
       
-      Logger.log(`✅ Refund event sent for cancelled order: ${orderId}`);
+      Logger.log(`📊 Marked as PIXEL (Browser tracked): ${orderId}`);
     }
   }
   
-  // ⚠️ BATCH UPDATE: Write all updates at once (MUCH faster!)
+  // BATCH UPDATE: Write all updates at once (MUCH faster!)
   updates.forEach(update => {
     sheet.getRange(update.row, COLUMNS.SENT_TO_META + 1).setValue(update.sentToMeta);
-    sheet.getRange(update.row, COLUMNS.EVENT_ID + 1).setValue(update.eventId);
+    if (update.eventId) {
+      sheet.getRange(update.row, COLUMNS.EVENT_ID + 1).setValue(update.eventId);
+    }
   });
   
   // Mark all events as sent in batch
@@ -485,7 +514,7 @@ function sendStatusUpdateEvents() {
     SpreadsheetApp.flush();
   }
   
-  Logger.log(`Sent ${eventsSent} Cancelled/Refund events to Meta`);
+  Logger.log(`Summary: ${refundEventsSent} Refund events sent, ${pixelMarked} orders marked as PIXEL-tracked`);
 }
 
 // ============================================
@@ -826,13 +855,16 @@ function testConnection() {
 }
 
 /**
- * Process all orders manually (one-time)
- * Use this to catch up on orders
+ * Process cancelled orders manually (one-time)
+ * Sends Refund events for any missed cancelled orders
+ * 
+ * ⚠️ NOTE: This only processes Refund events!
+ * Purchase events are handled by Browser Pixel only.
  */
 function processAllOrders() {
-  sendNewPurchaseEvents();
+  // Only process Refund events (sendNewPurchaseEvents is disabled)
   sendStatusUpdateEvents();
-  Logger.log('All orders processed!');
+  Logger.log('Cancelled orders processed for Refund events!');
 }
 
 // ============================================

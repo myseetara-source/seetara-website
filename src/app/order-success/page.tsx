@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, Suspense, useRef } from 'react';
+import { useEffect, Suspense, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle, MessageCircle, Truck, Phone, Banknote } from 'lucide-react';
@@ -27,6 +27,7 @@ const MessengerIcon = () => (
 function OrderSuccessContent() {
   const searchParams = useSearchParams();
   const hasFiredPixel = useRef(false); // Prevent duplicate pixel fires
+  const [isHydrated, setIsHydrated] = useState(false); // Track hydration state
   
   // Get order details from URL params
   const orderType = searchParams.get('type') || 'buy';
@@ -39,35 +40,48 @@ function OrderSuccessContent() {
   const deliveryLocation = searchParams.get('delivery') || ''; // 'inside' or 'outside'
   const productName = searchParams.get('product') || 'Seetara Chain Bag'; // Dynamic product name
   
-  // CRITICAL FIX: Get orderId from multiple sources to ensure deduplication works
-  // Priority: 1. URL param, 2. sessionStorage (backup), 3. Generate new (last resort)
+  // ⚠️ BUG FIX: orderId MUST be stable across renders to prevent duplicate pixel fires!
+  // The issue was: on first render, searchParams might not be populated yet,
+  // causing a fallback orderId to be generated with Date.now().
+  // Then when searchParams populates, orderId changes, and useEffect fires AGAIN!
+  
+  // Get orderId from URL FIRST (most reliable)
   const urlOrderId = searchParams.get('order_id');
   
-  // Try sessionStorage as fallback if URL param is missing (can happen during redirect)
-  const sessionOrderId = typeof window !== 'undefined' ? sessionStorage.getItem('pending_order_id') : null;
+  // Use state to lock in the orderId after first successful read
+  // This prevents changes across renders from triggering duplicate pixel fires
+  const [lockedOrderId, setLockedOrderId] = useState<string | null>(null);
   
-  let orderId: string;
-  if (urlOrderId) {
-    orderId = urlOrderId;
-    console.log('✅ Using orderId from URL:', orderId);
-  } else if (sessionOrderId) {
-    orderId = sessionOrderId;
-    console.warn('⚠️ URL order_id missing! Using sessionStorage fallback:', orderId);
-  } else {
-    // Last resort - this should rarely happen
-    orderId = `seetara_${phone}_${Date.now()}`;
-    console.error('❌ DEDUPLICATION WARNING: No orderId found! Generated new:', orderId);
-    console.error('   This will cause duplicate events in Facebook Ads Manager!');
-  }
+  // Effect to lock in orderId once we have it (runs only once per mount)
+  useEffect(() => {
+    if (lockedOrderId) return; // Already locked
+    
+    // Priority: 1. URL param, 2. sessionStorage
+    if (urlOrderId) {
+      setLockedOrderId(urlOrderId);
+      console.log('✅ OrderId locked from URL:', urlOrderId);
+    } else if (typeof window !== 'undefined') {
+      const sessionOrderId = sessionStorage.getItem('pending_order_id');
+      if (sessionOrderId) {
+        setLockedOrderId(sessionOrderId);
+        console.warn('⚠️ OrderId locked from sessionStorage:', sessionOrderId);
+      }
+    }
+  }, [urlOrderId, lockedOrderId]);
   
-  // Clear the pending_order_id after reading (one-time use)
-  if (typeof window !== 'undefined' && sessionOrderId) {
-    // Don't clear immediately - keep for page refresh protection
-    // sessionStorage.removeItem('pending_order_id');
-  }
+  // Mark hydration complete (prevents SSR/hydration mismatch issues)
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+  
+  // Derive final orderId - use locked value if available
+  const orderId = lockedOrderId || urlOrderId || '';
   
   // Check if this order was already fired (prevents duplicate on page refresh)
-  const orderAlreadyFired = typeof window !== 'undefined' && sessionStorage.getItem(`pixel_fired_${orderId}`) === 'true';
+  // Only check AFTER hydration to avoid SSR mismatch
+  const orderAlreadyFired = isHydrated && orderId && 
+    typeof window !== 'undefined' && 
+    sessionStorage.getItem(`pixel_fired_${orderId}`) === 'true';
 
   // Delivery message based on location
   const getDeliveryMessage = () => {
@@ -82,16 +96,30 @@ function OrderSuccessContent() {
   // DEDUPLICATION FIX: Fire Purchase with EXACT same eventID as CAPI
   // Facebook will deduplicate events with matching event_id within 48 hours
   // If order is cancelled, CAPI sends Refund event to adjust ROAS
+  // 
+  // ⚠️ BUG FIX: Only fire AFTER:
+  // 1. isHydrated = true (client-side render complete)
+  // 2. orderId is locked/stable (prevents firing with temporary values)
+  // 3. orderId is non-empty (prevents firing without proper tracking)
   useEffect(() => {
+    // ⚠️ CRITICAL: Wait for hydration AND stable orderId
+    // This prevents the race condition where pixel fires twice:
+    // 1. First with temporary/missing orderId
+    // 2. Again when orderId becomes available
+    if (!isHydrated || !lockedOrderId) {
+      console.log('FB Pixel WAITING - hydration:', isHydrated, 'lockedOrderId:', lockedOrderId);
+      return;
+    }
+    
     if (hasFiredPixel.current || orderAlreadyFired) {
-      console.log('FB Pixel event SKIPPED - already fired');
+      console.log('FB Pixel event SKIPPED - already fired for:', lockedOrderId);
       return;
     }
     
     if (typeof window !== 'undefined' && window.fbq) {
       // CRITICAL: eventID must EXACTLY match CAPI's event_id for deduplication
       // Both use orderId directly (no prefix!)
-      const eventId = orderId;
+      const eventId = lockedOrderId;
       
       if (orderType === 'buy') {
         // Parse value safely - default to 0 if invalid, but log warning
@@ -108,11 +136,11 @@ function OrderSuccessContent() {
           content_name: `${productName} - ${productColor}`,
           content_type: 'product',
           content_ids: [productName],
-          order_id: orderId,
+          order_id: lockedOrderId,
         }, { eventID: eventId }); // EXACT same ID as CAPI sends
         
         console.log('✅ FB Pixel Purchase fired with eventID:', eventId, 'Value:', purchaseValue);
-        console.log('   (CAPI will send same event_id for deduplication)');
+        console.log('   (This is the ONLY Purchase event - CAPI handles Refunds only)');
       } else {
         // For inquiries, fire Lead event
         window.fbq('track', 'Lead', {
@@ -124,9 +152,10 @@ function OrderSuccessContent() {
       }
       
       hasFiredPixel.current = true;
-      sessionStorage.setItem(`pixel_fired_${orderId}`, 'true');
+      sessionStorage.setItem(`pixel_fired_${lockedOrderId}`, 'true');
+      console.log('✅ Pixel fire recorded in sessionStorage for:', lockedOrderId);
     }
-  }, [orderType, grandTotal, productColor, productName, orderId, orderAlreadyFired]);
+  }, [isHydrated, lockedOrderId, orderType, grandTotal, productColor, productName, orderAlreadyFired]);
 
   // WhatsApp handler - opens WhatsApp with pre-filled message
   const handleWhatsAppClick = () => {
